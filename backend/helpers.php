@@ -39,7 +39,12 @@ function body(): array {
 }
 
 function bearerToken(): ?string {
+    // Apache often strips HTTP_AUTHORIZATION from $_SERVER; fall back to getallheaders()
     $h = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (!$h) {
+        $all = getallheaders();
+        $h   = $all['Authorization'] ?? $all['authorization'] ?? '';
+    }
     if (strpos($h, 'Bearer ') === 0) {
         return substr($h, 7);
     }
