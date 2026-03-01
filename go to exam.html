@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>صفحة الامتحان</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="backend/api.js"></script>
+</head>
+<body>
+  <h1 class="h1">بالتوفيق</h1>
+  <p class="paragraph" id="examInfo"></p>
+
+  <div id="startSection" class="center">
+    <button id="startBtn" class="action-btn exam-btn">ابدأ الامتحان</button>
+  </div>
+
+  <div id="examSection" class="hidden">
+    <div id="timer">الوقت المتبقي: <span id="time">00:00</span></div>
+    <div id="questionContainer"></div>
+    <button id="submitBtn" class="action-btn exam-btn">انتهيت</button>
+  </div>
+
+  <div id="warnBanner">⚠️ تحذير: ممنوع الخروج من صفحة الامتحان!</div>
+  <video id="videoPreview" autoplay muted playsinline class="hidden"></video>
+
+  <script>
+  (function(){
+    let examData   = null;
+    let sessionId  = null;
+    let timerInterval = null;
+    let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+    // ── Load exam from backend ──────────────────────────────────────────────
+    async function init() {
+      // Verify student session via server
+      const meRes = await API.me().catch(() => null);
+      if (!meRes || !meRes.success || meRes.data.role !== 'student') {
+        window.location.href = 'index.html';
+        return;
+      }
+      currentUser = meRes.data;
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+      const res = await API.getExam().catch(() => null);
+      if (!res || !res.success || !res.data) {
+        document.getElementById('examInfo').textContent = 'لا يوجد امتحان متاح حالياً.';
+        document.getElementById('startSection').classList.add('hidden');
+        return;
+      }
+      examData = res.data;
+      document.getElementById('examInfo').textContent =
+        `${examData.college || ''} — ${examData.department || ''} — ${examData.batch || ''} — ${examData.subject}`;
+    }
+
+    // ── Camera ──────────────────────────────────────────────────────────────
+    function startCamera() {
+      const vid = document.getElementById('videoPreview');
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+          vid.srcObject = stream;
+          vid.classList.remove('hidden');
+          addLog('كاميرا وميكروفون مفعلان');
+        }).catch(err => {
+          addLog('فشل الوصول للكاميرا/الميكروفون: ' + err.message);
+        });
+    }
+
+    // ── Logging ─────────────────────────────────────────────────────────────
+    function addLog(msg) {
+      if (sessionId) {
+        API.logActivity(sessionId, msg).catch(() => {});
+      }
+    }
+
+    // ── Start exam ──────────────────────────────────────────────────────────
+    async function startExam() {
+      if (!currentUser || currentUser.role !== 'student') {
+        alert('يرجى تسجيل الدخول كطالب أولاً');
+        window.location.href = 'index.html';
+        return;
+      }
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('startBtn').textContent = 'جارٍ البدء...';
+
+      const res = await API.startSession(examData.id).catch(e => ({ success: false, message: e.message }));
+      if (!res.success) {
+        alert(res.message);
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('startBtn').textContent = 'ابدأ الامتحان';
+        return;
+      }
+      sessionId = res.data.session_id;
+
+      addLog('بدء الامتحان: ' + currentUser.name);
+      startCamera();
+      document.getElementById('startSection').classList.add('hidden');
+      document.getElementById('examSection').classList.remove('hidden');
+      runTimer(examData.duration * 60);
+      renderQuestions();
+      attachRestrictions();
+    }
+
+    // ── Timer ───────────────────────────────────────────────────────────────
+    function runTimer(seconds) {
+      const timeEl = document.getElementById('time');
+      let remaining = seconds;
+      timerInterval = setInterval(() => {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        timeEl.textContent =
+          `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if (remaining-- <= 0) {
+          clearInterval(timerInterval);
+          finishExam();
+        }
+      }, 1000);
+    }
+
+    // ── Render questions ────────────────────────────────────────────────────
+    function renderQuestions() {
+      const cont = document.getElementById('questionContainer');
+      cont.innerHTML = '';
+      examData.questions.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '20px';
+        div.dataset.questionId = q.id;
+        div.innerHTML = `<p><strong>${i + 1}. ${q.text}</strong> (${q.mark} نقطة)</p>`;
+
+        if (q.type === 'mcq') {
+          [['a','أ'],['b','ب'],['c','ج'],['d','د']].forEach(([key, label]) => {
+            div.innerHTML += `<div><label>
+              <input type="radio" name="q${i}" value="${key}"> ${label}) ${q[key]}
+            </label></div>`;
+          });
+        } else if (q.type === 'tf') {
+          div.innerHTML += `<div>
+            <label><input type="radio" name="q${i}" value="true"> صح</label>
+            <label style="margin-right:16px"><input type="radio" name="q${i}" value="false"> خطأ</label>
+          </div>`;
+        } else if (q.type === 'short') {
+          div.innerHTML += `<div>
+            <input type="text" name="q${i}" style="width:100%;padding:8px;margin-top:5px;">
+          </div>`;
+        }
+        cont.appendChild(div);
+      });
+    }
+
+    // ── Non-blocking warning banner (replaces alert to avoid blur loop) ────
+    let warnTimer = null;
+    function showWarn(msg) {
+      const banner = document.getElementById('warnBanner');
+      banner.textContent = '⚠️ ' + msg;
+      banner.style.display = 'block';
+      clearTimeout(warnTimer);
+      warnTimer = setTimeout(() => { banner.style.display = 'none'; }, 3000);
+    }
+
+    // ── Anti-cheat restrictions ─────────────────────────────────────────────
+    function attachRestrictions() {
+      document.addEventListener('visibilitychange', () => {
+        addLog('visibility ' + document.visibilityState);
+        if (document.visibilityState === 'hidden') {
+          showWarn('ممنوع الخروج من صفحة الامتحان أثناء الوقت!');
+        }
+      });
+      window.addEventListener('blur',  () => { addLog('window blur');  showWarn('ابق داخل الامتحان!'); });
+      window.addEventListener('focus', () => addLog('window focus'));
+      window.addEventListener('beforeunload', e => { e.preventDefault(); e.returnValue = ''; addLog('attempt leave page'); });
+
+      ['copy','paste','cut','contextmenu'].forEach(evt => {
+        document.addEventListener(evt, e => { e.preventDefault(); addLog('blocked ' + evt); });
+      });
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && ['c','v','x','s','u'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          addLog('blocked ctrl+' + e.key);
+        }
+      });
+      // Throttle mousemove: log at most once every 30 seconds
+      let lastMouseLog = 0;
+      document.addEventListener('mousemove', e => {
+        const now = Date.now();
+        if (now - lastMouseLog > 30000) {
+          lastMouseLog = now;
+          addLog(`mouse ${e.clientX},${e.clientY}`);
+        }
+      });
+    }
+
+    // ── Finish & grade ──────────────────────────────────────────────────────
+    async function finishExam() {
+      clearInterval(timerInterval);
+
+      // Disable submit button immediately to prevent double-submit
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'جارٍ التسليم...';
+
+      // Collect answers
+      const answers = examData.questions.map((q, i) => {
+        let answer = null;
+        if (q.type === 'mcq' || q.type === 'tf') {
+          const sel = document.querySelector(`input[name="q${i}"]:checked`);
+          answer = sel ? sel.value : null;
+        } else {
+          const inp = document.querySelector(`input[name="q${i}"]`);
+          answer = inp ? inp.value.trim() : null;
+        }
+        return { question_id: q.id, answer };
+      });
+
+      addLog('انتهاء الامتحان');
+
+      const res = await API.submitExam(sessionId, answers)
+        .catch(e => ({ success: false, message: e.message }));
+
+      if (!res.success) {
+        alert('خطأ في تسليم الامتحان: ' + res.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'انتهيت';
+        return;
+      }
+
+      window.location.href = 'results.html';
+    }
+
+    // ── Wire buttons ────────────────────────────────────────────────────────
+    document.getElementById('startBtn').addEventListener('click',  startExam);
+    document.getElementById('submitBtn').addEventListener('click', finishExam);
+
+    init();
+  })();
+  </script>
+</body>
+</html>

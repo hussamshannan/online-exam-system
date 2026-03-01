@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>صفحة الأستاذ — إعداد الامتحان</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
+	<script src="backend/api.js"></script>
+</head>
+<body>
+	<h1 class="h1">بدء إنشاء الامتحان</h1>
+	<p class="paragraph">أدخل بيانات الكلية والقسم والمادة ثم حدد زمن الامتحان</p>
+	<div class="box">
+
+		<!-- Step 1: basic metadata -->
+		<section id="step1">
+			<h2>معلومات الكلية</h2>
+			<div class="row">
+				<div class="group"><label>الكلية</label>
+					<select id="inpCollege" class="dropdown-select dropdown-select-visible" required>
+						<option value="">اختر الكلية</option>
+						<option value="كلية الهندسة">كلية الهندسة</option>
+						<option value="كلية الطب">كلية الطب</option>
+						<option value="كلية الآداب">كلية الآداب</option>
+						<option value="كلية الحاسوب">كلية الحاسوب</option>
+						<option value="كلية التمريض">كلية التمريض</option>
+						<option value="other">أخرى</option>
+					</select>
+					<input type="text" id="customCollege" placeholder="اكتب اسم الكلية" style="display:none;margin-top:8px">
+				</div>
+				<div class="group"><label>القسم</label>
+					<select id="inpDepartment" class="dropdown-select dropdown-select-visible" required>
+						<option value="">اختر القسم</option>
+					</select>
+					<input type="text" id="customDepartment" placeholder="اكتب اسم القسم" style="display:none;margin-top:8px">
+				</div>
+				<div class="group"><label>الدفعة</label>
+					<select id="inpBatch" class="dropdown-select dropdown-select-visible" required>
+						<option value="">اختر الدفعة</option>
+						<option value="الدفعة الأولى">الدفعة الأولى</option>
+						<option value="الدفعة الثانية">الدفعة الثانية</option>
+						<option value="الدفعة الثالثة">الدفعة الثالثة</option>
+						<option value="الدفعة الرابعة">الدفعة الرابعة</option>
+						<option value="الدفعة الخامسة">الدفعة الخامسة</option>
+						<option value="other">أخرى</option>
+					</select>
+					<input type="text" id="customBatch" placeholder="اكتب الدفعة" style="display:none;margin-top:8px">
+				</div>
+				<div class="group"><label>المادة</label>
+					<select id="inpSubject" class="dropdown-select dropdown-select-visible" required>
+						<option value="">اختر المادة</option>
+					</select>
+					<input type="text" id="customSubject" placeholder="اكتب اسم المادة" style="display:none;margin-top:8px">
+				</div>
+			</div>
+			<div style="margin-top:12px">
+				<button id="toStep2" class="btn">التالي</button>
+			</div>
+			<div id="msg1" class="notice"></div>
+		</section>
+
+		<!-- Step 2: duration + load or add questions -->
+		<section id="step2" class="hidden">
+			<h2>زمن الامتحان وخيارات الأسئلة</h2>
+			<div class="row">
+				<div class="group"><label>زمن الامتحان (دقيقة)</label><input id="inpDuration" type="number" min="1" placeholder="مثال: 90"></div>
+			</div>
+
+			<div style="margin-top:12px">
+				<button id="loadSaved" class="btn ghost">تحميل امتحان جاهز</button>
+				<button id="manualAdd" class="btn">أضف أسئلة يدوياً</button>
+				<button id="backStep1" class="btn ghost">الرجوع</button>
+			</div>
+
+			<div id="loadedInfo" class="list"></div>
+			<div id="msg2" class="notice"></div>
+		</section>
+
+		<!-- Question builder (shown when user chooses manual add) -->
+		<section id="builder" class="hidden">
+			<h2>إضافة الأسئلة يدوياً</h2>
+			<div class="row">
+				<div style="min-width:160px"><label>نوع السؤال</label><select id="qType"><option value="mcq">اختيار من متعدد</option><option value="tf">صح أو خطأ</option><option value="short">إجابة قصيرة</option></select></div>
+				<div style="flex:1"><label>نص السؤال</label><textarea id="qText" rows="2"></textarea></div>
+				<div style="min-width:100px"><label>الدرجة</label><input id="qMark" type="number" value="1" min="0"></div>
+			</div>
+
+			<div id="mcqFields" style="margin-top:8px">
+				<div class="row"><input id="a" placeholder="الخيار أ"><input id="b" placeholder="الخيار ب"><input id="c" placeholder="الخيار ج"><input id="d" placeholder="الخيار د"></div>
+				<div style="margin-top:6px"><label>الإجابة الصحيحة</label><select id="correct"><option value="">اختر</option><option value="a">أ</option><option value="b">ب</option><option value="c">ج</option><option value="d">د</option></select></div>
+			</div>
+			<div id="tfFields" class="hidden" style="margin-top:8px"><label>الإجابة</label><select id="tf"><option value="">اختر</option><option value="true">صح</option><option value="false">خطأ</option></select></div>
+			<div id="shortFields" class="hidden" style="margin-top:8px"><label>الإجابة المتوقعة (اختياري)</label><input id="shortAns"></div>
+
+			<div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+				<button id="addQuestion" class="btn">إضافة سؤال</button>
+				<button id="saveAll" class="btn">حفظ الامتحان</button>
+				<button id="toStep2fromBuilder" class="btn ghost">العودة</button>
+			</div>
+
+			<div id="questionsList" class="list"></div>
+			<div id="msg3" class="notice"></div>
+		</section>
+
+	</div>
+
+	<script>
+	// Verify teacher session on load
+	(async function(){
+		const res = await API.me().catch(() => null);
+		if (!res || !res.success || res.data.role !== 'teacher') {
+			window.location.href = 'index.html';
+		}
+	})();
+
+	(function(){
+		const step1 = document.getElementById('step1');
+		const step2 = document.getElementById('step2');
+		const builder = document.getElementById('builder');
+		const toStep2 = document.getElementById('toStep2');
+		const backStep1 = document.getElementById('backStep1');
+		const loadSaved = document.getElementById('loadSaved');
+		const manualAdd = document.getElementById('manualAdd');
+		const toStep2fromBuilder = document.getElementById('toStep2fromBuilder');
+
+		const inpCollege = document.getElementById('inpCollege');
+		const customCollege = document.getElementById('customCollege');
+		const inpDepartment = document.getElementById('inpDepartment');
+		const customDepartment = document.getElementById('customDepartment');
+		const inpBatch = document.getElementById('inpBatch');
+		const customBatch = document.getElementById('customBatch');
+		const inpSubject = document.getElementById('inpSubject');
+		const customSubject = document.getElementById('customSubject');
+		const inpDuration = document.getElementById('inpDuration');
+
+		const qType = document.getElementById('qType');
+		const qText = document.getElementById('qText');
+		const qMark = document.getElementById('qMark');
+		const a = document.getElementById('a');
+		const b = document.getElementById('b');
+		const c = document.getElementById('c');
+		const d = document.getElementById('d');
+		const correct = document.getElementById('correct');
+		const tf = document.getElementById('tf');
+		const shortAns = document.getElementById('shortAns');
+
+		const questionsList = document.getElementById('questionsList');
+		const loadedInfo = document.getElementById('loadedInfo');
+		const msg1 = document.getElementById('msg1');
+		const msg2 = document.getElementById('msg2');
+		const msg3 = document.getElementById('msg3');
+
+		let questions = [];
+
+		// mapping للأقسام حسب الكلية
+		const departmentsByCollege = {
+			'كلية الهندسة': ['هندسة برمجيات', 'هندسة مدنية', 'هندسة كهربائية', 'هندسة ميكانيكية'],
+			'كلية الطب': ['الطب البشري', 'طب الأسنان', 'الصيدلة'],
+			'كلية الآداب': ['اللغة العربية', 'اللغة الإنجليزية', 'التاريخ', 'الجغرافيا'],
+			'كلية الحاسوب': ['علوم الحاسوب', 'نظم المعلومات', 'تقنية المعلومات'],
+			'كلية التمريض': ['التمريض السريري', 'تمريض الصحة العامة', 'تمريض الطوارئ']
+		};
+
+		// mapping للمواد حسب القسم
+		const subjectsByDepartment = {
+			'هندسة برمجيات': ['برمجة 1', 'برمجة 2', 'قواعد البيانات', 'الخوارزميات', 'هندسة البرمجيات'],
+			'هندسة مدنية': ['الميكانيكا الهندسية', 'الإنشاءات', 'الهندسة المائية', 'الطرق والنقل'],
+			'هندسة كهربائية': ['الدوائر الكهربائية', 'الآلات الكهربائية', 'القوى الكهربائية', 'الإلكترونيات'],
+			'هندسة ميكانيكية': ['الديناميكا', 'الثرموديناميك', 'تصميم الآلات', 'الموائع'],
+			'الطب البشري': ['التشريح', 'الفسيولوجيا', 'المرضية', 'الطب الباطني'],
+			'طب الأسنان': ['تشريح الأسنان', 'علاج الجذور', 'زراعة الأسنان', 'طب أسنان الأطفال'],
+			'الصيدلة': ['الكيمياء الدوائية', 'الصيدلانيات', 'الفارماكولوجيا', 'الكيمياء التحليلية'],
+			'اللغة العربية': ['النحو', 'الصرف', 'الأدب العربي', 'البلاغة'],
+			'اللغة الإنجليزية': ['قواعد اللغة', 'الأدب الإنجليزي', 'مهارات التواصل', 'الترجمة'],
+			'التاريخ': ['التاريخ القديم', 'التاريخ الوسيط', 'التاريخ الحديث', 'التاريخ المعاصر'],
+			'الجغرافيا': ['الجغرافيا البشرية', 'الجغرافيا الطبيعية', 'الجغرافيا السياسية', 'الكارتوغرافيا'],
+			'علوم الحاسوب': ['هياكل البيانات', 'خوارزميات متقدمة', 'نظم التشغيل', 'شبكات الحاسوب'],
+			'نظم المعلومات': ['تحليل النظم', 'قواعد البيانات المتقدمة', 'أمن المعلومات', 'أنظمة المعلومات'],
+			'تقنية المعلومات': ['الشبكات', 'الخوادم', 'دعم المستخدمين', 'صيانة الأنظمة'],
+			'التمريض السريري': ['التمريض الطبي', 'التمريض الجراحي', 'تمريض العناية المركزة'],
+			'تمريض الصحة العامة': ['الصحة العامة', 'الأمراض المعدية', 'التثقيف الصحي'],
+			'تمريض الطوارئ': ['الإسعافات الأولية', 'الطوارئ والكوارث', 'العمليات الجراحية']
+		};
+
+		function updateDepartments(){
+			const college = inpCollege.value;
+			inpDepartment.innerHTML = '<option value="">اختر القسم</option>';
+			customDepartment.style.display = 'none';
+			inpDepartment.style.display = 'block';
+			inpSubject.innerHTML = '<option value="">اختر المادة</option>';
+			customSubject.style.display = 'none';
+			if(college && departmentsByCollege[college]){
+				departmentsByCollege[college].forEach(dept=>{
+					const opt = document.createElement('option');
+					opt.value = dept; opt.textContent = dept;
+					inpDepartment.appendChild(opt);
+				});
+				const opt = document.createElement('option');
+				opt.value = 'other'; opt.textContent = 'أخرى';
+				inpDepartment.appendChild(opt);
+			}
+		}
+
+		function updateSubjects(){
+			const department = inpDepartment.value;
+			inpSubject.innerHTML = '<option value="">اختر المادة</option>';
+			customSubject.style.display = 'none';
+			if(department && department !== 'other' && subjectsByDepartment[department]){
+				subjectsByDepartment[department].forEach(subj=>{
+					const opt = document.createElement('option');
+					opt.value = subj; opt.textContent = subj;
+					inpSubject.appendChild(opt);
+				});
+				const opt = document.createElement('option');
+				opt.value = 'other'; opt.textContent = 'أخرى';
+				inpSubject.appendChild(opt);
+			} else if(department === 'other'){
+				const opt = document.createElement('option');
+				opt.value = 'other'; opt.textContent = 'أخرى';
+				inpSubject.appendChild(opt);
+			}
+		}
+
+		function show(el){el.classList.remove('hidden');}
+		function hide(el){el.classList.add('hidden');}
+		function showMsg(el,text,ok=true){el.textContent=text;el.style.display='block';el.style.background=ok? '#d4edda':'#f8d7da';el.style.color=ok? '#155724':'#721c24';setTimeout(()=>el.style.display='none',3000);}
+
+		// handle custom inputs
+		inpCollege.addEventListener('change', ()=>{
+			customCollege.style.display = inpCollege.value==='other'?'block':'none';
+			updateDepartments();
+		});
+		inpDepartment.addEventListener('change', ()=>{
+			customDepartment.style.display = inpDepartment.value==='other'?'block':'none';
+			updateSubjects();
+		});
+		inpBatch.addEventListener('change', ()=>{customBatch.style.display = inpBatch.value==='other'?'block':'none';});
+		inpSubject.addEventListener('change', ()=>{customSubject.style.display = inpSubject.value==='other'?'block':'none';});
+
+		function getCollegeValue(){return inpCollege.value==='other'?customCollege.value.trim():inpCollege.value;}
+		function getDepartmentValue(){return inpDepartment.value==='other'?customDepartment.value.trim():inpDepartment.value;}
+		function getBatchValue(){return inpBatch.value==='other'?customBatch.value.trim():inpBatch.value;}
+		function getSubjectValue(){return inpSubject.value==='other'?customSubject.value.trim():inpSubject.value;}
+
+		toStep2.addEventListener('click', (e)=>{
+			e.preventDefault();
+			const col = getCollegeValue();
+			const dept = getDepartmentValue();
+			const batch = getBatchValue();
+			const subj = getSubjectValue();
+			if(!col||!dept||!batch||!subj){showMsg(msg1,'اكمل جميع البيانات',false);return}
+			hide(step1); show(step2);
+		});
+
+		backStep1.addEventListener('click', ()=>{hide(step2); show(step1);});
+
+		manualAdd.addEventListener('click', ()=>{hide(step2); show(builder); renderQuestions();});
+		toStep2fromBuilder.addEventListener('click', ()=>{hide(builder); show(step2);});
+
+		loadSaved.addEventListener('click', ()=>{
+			const ex = localStorage.getItem('examData');
+			if(!ex){showMsg(msg2,'لا يوجد امتحان محفوظ',false);return}
+			try{const d=JSON.parse(ex); loadedInfo.innerHTML = `<p>تم تحميل امتحان: <strong>${d.subject||''}</strong> — الأسئلة: ${ (d.questions||[]).length }</p>`; inpDuration.value = d.duration||''; questions = d.questions||[]; renderQuestions(); showMsg(msg2,'تم تحميل الامتحان المحفوظ');}catch(e){showMsg(msg2,'خطأ بتحميل الامتحان',false)}
+		});
+
+		qType.addEventListener('change', ()=>{
+			if(qType.value==='mcq'){show(document.getElementById('mcqFields')); hide(document.getElementById('tfFields')); hide(document.getElementById('shortFields'));}
+			if(qType.value==='tf'){hide(document.getElementById('mcqFields')); show(document.getElementById('tfFields')); hide(document.getElementById('shortFields'));}
+			if(qType.value==='short'){hide(document.getElementById('mcqFields')); hide(document.getElementById('tfFields')); show(document.getElementById('shortFields'));}
+		});
+
+		function renderQuestions(){
+			if(questions.length===0){questionsList.innerHTML='<p style="color:#666">لا توجد أسئلة</p>';return}
+			questionsList.innerHTML='';
+			questions.forEach((q,i)=>{
+				const div = document.createElement('div'); div.className='question-item';
+				div.innerHTML = `<p><strong>السؤال ${i+1}:</strong> ${escapeHtml(q.text)} <span style="float:left">(${q.mark} درج)</span></p>`;
+				if(q.type==='mcq') div.innerHTML += `<p>أ) ${escapeHtml(q.a)} — ب) ${escapeHtml(q.b)} — ج) ${escapeHtml(q.c)} — د) ${escapeHtml(q.d)}</p><p style="color:#2d5016"><strong>الإجابة:</strong> ${q.correct}</p>`;
+				if(q.type==='tf') div.innerHTML += `<p>صح/خطأ — الإجابة: ${q.correct==='true'?'صح':'خطأ'}</p>`;
+				if(q.type==='short') div.innerHTML += `<p>إجابة متوقعة: ${escapeHtml(q.answer||'')}</p>`;
+				const del = document.createElement('button'); del.textContent='حذف'; del.className='btn ghost'; del.style.marginTop='6px'; del.style.marginLeft='0'; del.addEventListener('click', ()=>{questions.splice(i,1);renderQuestions();});
+				div.appendChild(del); questionsList.appendChild(div);
+			});
+		}
+
+		function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+
+		document.getElementById('addQuestion').addEventListener('click', (e)=>{
+			e.preventDefault();
+			const type=qType.value; const text=qText.value.trim(); const mark=Number(qMark.value)||0;
+			if(!text){showMsg(msg3,'اكتب نص السؤال',false);return}
+			if(type==='mcq'){ if(!a.value.trim()||!b.value.trim()||!c.value.trim()||!d.value.trim()||!correct.value){showMsg(msg3,'اكمل كل اختيارات MCQ واختر الإجابة',false);return}
+				questions.push({type:'mcq',text,mark,a:a.value,b:b.value,c:c.value,d:d.value,correct:correct.value});
+			} else if(type==='tf'){ if(!tf.value){showMsg(msg3,'اختر الإجابة (صح/خطأ)',false);return} questions.push({type:'tf',text,mark,correct:tf.value}); }
+			else { questions.push({type:'short',text,mark,answer:shortAns.value||''}); }
+			qText.value=''; a.value=''; b.value=''; c.value=''; d.value=''; correct.value=''; tf.value=''; shortAns.value=''; qMark.value=1; renderQuestions(); showMsg(msg3,'تمت إضافة السؤال');
+		});
+
+		document.getElementById('saveAll').addEventListener('click', async (e)=>{
+			e.preventDefault();
+			const col = getCollegeValue();
+			const dept = getDepartmentValue();
+			const batch = getBatchValue();
+			const subj = getSubjectValue();
+			if(!col||!dept||!batch||!subj){showMsg(msg1,'اكمل بيانات الكلية/القسم/الدفعة/المادة',false);return}
+			if(!inpDuration.value){showMsg(msg2,'اضبط زمن الامتحان',false);return}
+			if(questions.length===0){showMsg(msg3,'أضف سؤالاً واحداً على الأقل قبل الحفظ',false);return}
+			const btn = document.getElementById('saveAll');
+			btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
+			try {
+				const res = await API.saveExam({
+					college: col, department: dept, batch, subject: subj,
+					duration: Number(inpDuration.value), questions
+				});
+				showMsg(msg3, res.success ? ('✓ ' + res.message) : ('✗ ' + res.message), res.success);
+			} catch(err) {
+				showMsg(msg3, '✗ ' + err.message, false);
+			} finally {
+				btn.disabled = false; btn.textContent = 'حفظ الامتحان';
+			}
+		});
+
+		// load existing on open
+		(function(){const ex=localStorage.getItem('examData'); if(ex){try{const d=JSON.parse(ex);
+			const collegeOpt = Array.from(inpCollege.options).find(o=>o.value===d.college);
+			if(collegeOpt) {inpCollege.value=d.college; updateDepartments();} 
+			else {inpCollege.value='other'; customCollege.value=d.college||''; customCollege.style.display='block'; updateDepartments();}
+			setTimeout(()=>{
+				const deptOpt = Array.from(inpDepartment.options).find(o=>o.value===d.department);
+				if(deptOpt) {inpDepartment.value=d.department; updateSubjects();} 
+				else {inpDepartment.value='other'; customDepartment.value=d.department||''; customDepartment.style.display='block';}
+				setTimeout(()=>{
+					const subjOpt = Array.from(inpSubject.options).find(o=>o.value===d.subject);
+					if(subjOpt) inpSubject.value=d.subject; else {inpSubject.value='other'; customSubject.value=d.subject||''; customSubject.style.display='block';}
+				}, 0);
+			}, 0);
+			const batchOpt = Array.from(inpBatch.options).find(o=>o.value===d.batch);
+			if(batchOpt) inpBatch.value=d.batch; else {inpBatch.value='other'; customBatch.value=d.batch||''; customBatch.style.display='block';}
+			inpDuration.value=d.duration||''; 
+			questions=d.questions||[]; 
+		}catch(e){}}})();
+
+	})();
+	</script>
+
+</body>
+</html>

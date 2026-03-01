@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نتيجة الامتحان</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="backend/api.js"></script>
+</head>
+<body>
+  <h1 class="h1">نتيجة الامتحان</h1>
+  <p class="paragraph">إليك نتيجتك في الامتحان</p>
+
+  <div class="result-box" id="resultBox">
+    <p class="meta" style="color:#aaa">جارٍ تحميل النتيجة...</p>
+  </div>
+
+  <div class="center" style="margin-top:20px">
+    <a href="student2.html"><button class="login-btn">العودة للرئيسية</button></a>
+  </div>
+
+  <script>
+    (async function(){
+      // Verify student session
+      const meRes = await API.me().catch(() => null);
+      if (!meRes || !meRes.success || meRes.data.role !== 'student') {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      const box = document.getElementById('resultBox');
+      const res = await API.getResult().catch(e => ({ success: false, message: e.message }));
+
+      if (!res.success || !res.data) {
+        box.innerHTML = '<p style="color:#999;margin-top:30px">' + (res.message || 'لا توجد نتيجة محفوظة.') + '</p>';
+        return;
+      }
+
+      const r      = res.data;
+      const passed = r.percentage >= 50;
+      const score  = parseFloat(r.score);
+      const total  = parseFloat(r.total_marks);
+      const pct    = parseFloat(r.percentage);
+      const date   = r.submitted_at
+        ? new Date(r.submitted_at).toLocaleDateString('ar-IQ')
+        : '—';
+
+      box.innerHTML = `
+        <div class="score-circle">
+          <span class="score-percent">${pct}%</span>
+          <span class="score-fraction">${score} / ${total}</span>
+        </div>
+        <span class="badge ${passed ? 'pass' : 'fail'}">${passed ? 'ناجح ✓' : 'راسب ✗'}</span>
+        <p class="meta"><strong>الطالب:</strong>  ${r.student_name || '—'}</p>
+        <p class="meta"><strong>المادة:</strong>   ${r.subject || '—'}</p>
+        <p class="meta"><strong>الكلية:</strong>   ${r.college || '—'}</p>
+        <p class="meta"><strong>التاريخ:</strong>  ${date}</p>
+      `;
+    })();
+  </script>
+</body>
+</html>

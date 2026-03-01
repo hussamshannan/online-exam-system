@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>إضافة الأسئلة</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<h1 class="h1">إضافة الأسئلة</h1>
+	<p class="paragraph">أضف الأسئلة واختر النوع المناسب</p>
+	
+	<div class="box">
+		<h2>إضافة سؤال جديد</h2>
+
+		<!-- Question Type Selection -->
+		<div class="form-section">
+			<label>نوع السؤال</label>
+			<select id="qType">
+				<option value="mcq">اختيار من متعدد</option>
+				<option value="tf">صح أو خطأ</option>
+				<option value="short">إجابة قصيرة</option>
+			</select>
+		</div>
+
+		<!-- Question Text -->
+		<div class="form-section">
+			<label>نص السؤال</label>
+			<textarea id="qText" rows="3" placeholder="أدخل السؤال هنا..."></textarea>
+		</div>
+
+		<!-- Grade -->
+		<div class="form-section">
+			<label>الدرجة</label>
+			<input id="qMark" type="number" value="1" min="0" placeholder="1">
+		</div>
+
+		<!-- MCQ Section -->
+		<div id="mcqSection" class="form-section">
+			<h3>الخيارات</h3>
+			<div class="row">
+				<div class="group"><label>الخيار أ</label><input id="a" placeholder="الخيار الأول"></div>
+				<div class="group"><label>الخيار ب</label><input id="b" placeholder="الخيار الثاني"></div>
+				<div class="group"><label>الخيار ج</label><input id="c" placeholder="الخيار الثالث"></div>
+				<div class="group"><label>الخيار د</label><input id="d" placeholder="الخيار الرابع"></div>
+			</div>
+			<label>الإجابة الصحيحة</label>
+			<select id="correct">
+				<option value="">-- اختر --</option>
+				<option value="a">أ</option>
+				<option value="b">ب</option>
+				<option value="c">ج</option>
+				<option value="d">د</option>
+			</select>
+		</div>
+
+		<!-- True/False Section -->
+		<div id="tfSection" class="form-section hidden">
+			<h3>الإجابة</h3>
+			<label>الإجابة الصحيحة</label>
+			<select id="tf">
+				<option value="">-- اختر --</option>
+				<option value="true">✓ صح</option>
+				<option value="false">✗ خطأ</option>
+			</select>
+		</div>
+
+		<!-- Short Answer Section -->
+		<div id="shortSection" class="form-section hidden">
+			<h3>الإجابة المتوقعة</h3>
+			<label>الإجابة (اختياري)</label>
+			<input id="shortAns" placeholder="أدخل إجابة مرجعية...">
+		</div>
+
+		<div class="buttons-row">
+			<button id="addBtn" class="btn">➕ إضافة السؤال</button>
+		</div>
+
+		<div id="msg" class="msg"></div>
+	</div>
+
+	<!-- Questions List -->
+	<div class="box">
+		<h2>الأسئلة المضافة (<span id="count">0</span>)</h2>
+		<div id="qList"></div>
+	</div>
+
+	<!-- Next Button Section -->
+	<div class="box center">
+		<button id="nextBtn" class="btn primary">التالي — تحديد زمن الامتحان</button>
+	</div>
+
+	<script>
+	(function(){
+		const qType = document.getElementById('qType');
+		const qText = document.getElementById('qText');
+		const qMark = document.getElementById('qMark');
+		const a = document.getElementById('a');
+		const b = document.getElementById('b');
+		const c = document.getElementById('c');
+		const d = document.getElementById('d');
+		const correct = document.getElementById('correct');
+		const tf = document.getElementById('tf');
+		const shortAns = document.getElementById('shortAns');
+		const mcqSection = document.getElementById('mcqSection');
+		const tfSection = document.getElementById('tfSection');
+		const shortSection = document.getElementById('shortSection');
+		const addBtn = document.getElementById('addBtn');
+		const msg = document.getElementById('msg');
+		const qList = document.getElementById('qList');
+		const count = document.getElementById('count');
+
+		let questions = [];
+
+		function show(el){el.classList.remove('hidden');}
+		function hide(el){el.classList.add('hidden');}
+		
+		function showMsg(text, isSuccess=true){
+			msg.textContent = text;
+			msg.className = 'msg ' + (isSuccess ? 'success' : 'error');
+			msg.style.display = 'block';
+			setTimeout(() => {msg.style.display = 'none'}, 4000);
+		}
+
+		function escape(s){
+			return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+		}
+
+		qType.addEventListener('change', () => {
+			hide(mcqSection);
+			hide(tfSection);
+			hide(shortSection);
+			if(qType.value === 'mcq') show(mcqSection);
+			else if(qType.value === 'tf') show(tfSection);
+			else if(qType.value === 'short') show(shortSection);
+		});
+
+		function renderQuestions(){
+			if(questions.length === 0){
+				qList.innerHTML = '<p style="color:#999;text-align:center;padding:30px">لم تضف أي أسئلة بعد</p>';
+				count.textContent = '0';
+				return;
+			}
+
+			qList.innerHTML = '';
+			questions.forEach((q, i) => {
+				const div = document.createElement('div');
+				div.className = 'question-display';
+
+				let html = `<div class="q-number">السؤال ${i+1}</div>`;
+				html += `<div class="q-text"><strong>النص:</strong> ${escape(q.text)}</div>`;
+				html += `<div class="q-type">الدرجة: ${q.mark}</div>`;
+
+				if(q.type === 'mcq'){
+					html += `<div class="q-answer">`;
+					html += `<div class="answer-label">الخيارات:</div>`;
+					html += `<div>أ) ${escape(q.a)}</div>`;
+					html += `<div>ب) ${escape(q.b)}</div>`;
+					html += `<div>ج) ${escape(q.c)}</div>`;
+					html += `<div>د) ${escape(q.d)}</div>`;
+					html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #ddd;color:#2d5016;font-weight:600">✓ الإجابة الصحيحة: <strong>${q.correct.toUpperCase()}</strong></div>`;
+					html += `</div>`;
+				} else if(q.type === 'tf'){
+					const ans = q.correct === 'true' ? 'صح ✓' : 'خطأ ✗';
+					html += `<div class="q-answer"><div class="answer-label">الإجابة الصحيحة: <strong>${ans}</strong></div></div>`;
+				} else if(q.type === 'short'){
+					html += `<div class="q-answer"><div class="answer-label">نوع السؤال: إجابة قصيرة</div>`;
+					if(q.answer) html += `<div>إجابة مرجعية: ${escape(q.answer)}</div>`;
+					html += `</div>`;
+				}
+
+				div.innerHTML = html;
+
+				const deleteBtn = document.createElement('button');
+				deleteBtn.className = 'btn delete';
+				deleteBtn.textContent = '🗑️ حذف';
+				deleteBtn.addEventListener('click', () => {
+					questions.splice(i, 1);
+					renderQuestions();
+					showMsg('تم حذف السؤال');
+				});
+
+				div.appendChild(deleteBtn);
+				qList.appendChild(div);
+			});
+
+			count.textContent = questions.length;
+		}
+
+		addBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+
+			const type = qType.value;
+			const text = qText.value.trim();
+			const mark = Number(qMark.value) || 1;
+
+			if(!text){
+				showMsg('❌ أدخل نص السؤال', false);
+				return;
+			}
+
+			if(type === 'mcq'){
+				const optA = a.value.trim();
+				const optB = b.value.trim();
+				const optC = c.value.trim();
+				const optD = d.value.trim();
+				const ans = correct.value;
+
+				if(!optA || !optB || !optC || !optD){
+					showMsg('❌ أدخل جميع الخيارات', false);
+					return;
+				}
+				if(!ans){
+					showMsg('❌ اختر الإجابة الصحيحة', false);
+					return;
+				}
+
+				questions.push({type:'mcq',text,mark,a:optA,b:optB,c:optC,d:optD,correct:ans});
+				a.value = b.value = c.value = d.value = correct.value = '';
+			} else if(type === 'tf'){
+				const ans = tf.value;
+				if(!ans){
+					showMsg('❌ اختر الإجابة (صح أو خطأ)', false);
+					return;
+				}
+				questions.push({type:'tf',text,mark,correct:ans});
+				tf.value = '';
+			} else {
+				questions.push({type:'short',text,mark,answer:shortAns.value.trim()});
+				shortAns.value = '';
+			}
+
+			qText.value = '';
+			qMark.value = '1';
+			renderQuestions();
+			showMsg('✓ تم إضافة السؤال بنجاح');
+			qText.focus();
+		});
+
+		// Next Button Handler
+		document.getElementById('nextBtn').addEventListener('click', (e) => {
+			e.preventDefault();
+			if(questions.length === 0){
+				showMsg('❌ أضف سؤالاً واحداً على الأقل قبل المتابعة', false);
+				return;
+			}
+			localStorage.setItem('examQuestions', JSON.stringify(questions));
+			window.location.href = 'exam-time.html';
+		});
+
+		// Load & Save
+		window.addEventListener('beforeunload', () => {
+			localStorage.setItem('examQuestions', JSON.stringify(questions));
+		});
+
+		const saved = localStorage.getItem('examQuestions');
+		if(saved) {
+			try{questions = JSON.parse(saved);} catch(e){}
+		}
+
+		renderQuestions();
+	})();
+	</script>
+
+</body>
+</html>

@@ -1,0 +1,931 @@
+/* ============================================================
+   Online Exam System — Unified Stylesheet
+   ============================================================ */
+
+/* ── 1. CSS Variables + Reset ─────────────────────────────── */
+:root {
+  --green: #2d5016;
+  --green-light: #3d6b1f;
+  --green-bg: #eef3ea;
+  --tan: #d4a574;
+  --tan-dark: #c89560;
+  --bg: linear-gradient(135deg, #e8f0e8 0%, #f0e8e8 100%);
+  --card-bg: linear-gradient(135deg, #fff 0%, #f9f8f3 100%);
+  --card-flat: #f9f8f3;
+  --text: #2d2d2d;
+  --text-light: #666;
+  --text-muted: #999;
+  --danger: #dc3545;
+  --danger-dark: #c82333;
+  --success: #28a745;
+  --success-bg: #d4edda;
+  --success-text: #155724;
+  --danger-bg: #f8d7da;
+  --danger-text: #721c24;
+  --border: #eee;
+  --radius-card: 10px;
+  --radius-btn: 8px;
+  --radius-input: 6px;
+  --shadow: 0 6px 20px rgba(45, 80, 22, 0.12);
+  --shadow-hover: 0 10px 30px rgba(45, 80, 22, 0.18);
+  --shadow-btn: 0 4px 15px rgba(45, 80, 22, 0.25);
+  --transition: all 0.3s ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── 2. Typography ────────────────────────────────────────── */
+body {
+  font-family: "Cairo", sans-serif;
+  direction: rtl;
+  background: var(--bg);
+  background-attachment: fixed;
+  min-height: 100vh;
+  padding: 40px 20px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Cairo", sans-serif;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.h1 {
+  text-align: center;
+  font-size: 36px;
+  margin-bottom: 5px;
+  letter-spacing: -0.5px;
+  color: var(--green);
+}
+
+.paragraph {
+  font-size: 16px;
+  color: var(--text-light);
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ── 3. Layout ────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.box {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto 30px;
+  padding: 30px 35px;
+  background: var(--card-bg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  border-right: 6px solid var(--tan);
+  border-top: 3px solid var(--green);
+  transition: var(--transition);
+  overflow-x: auto;
+}
+
+.box:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-3px);
+}
+
+.dropdown-container {
+  margin: 30px auto;
+  width: fit-content;
+  padding: 30px 35px;
+  background: var(--card-bg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  border-right: 6px solid var(--tan);
+  border-top: 3px solid var(--green);
+  transition: var(--transition);
+}
+
+.dropdown-container:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-3px);
+}
+
+.card {
+  width: 80%;
+  max-width: 900px;
+  margin: 0 auto 30px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-right: 6px solid var(--tan);
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.group {
+  flex: 1;
+  min-width: 150px;
+}
+
+h2 {
+  color: var(--green);
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-weight: 600;
+  font-size: 20px;
+  border-bottom: 2px solid var(--tan);
+  padding-bottom: 10px;
+}
+
+h3 {
+  color: var(--green);
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+
+/* ── 4. Form Elements ─────────────────────────────────────── */
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 15px;
+  font-family: "Cairo", sans-serif;
+  border: 2px solid var(--tan);
+  border-radius: var(--radius-input);
+  background-color: #fff;
+  color: #333;
+  transition: var(--transition);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--green);
+  box-shadow: 0 3px 10px rgba(212, 165, 116, 0.2);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 12px rgba(45, 80, 22, 0.3);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #aaa;
+}
+
+select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 12 12'%3E%3Cpath fill='%232d5016' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 12px center;
+  padding-left: 40px;
+}
+
+select option {
+  color: #333;
+}
+
+/* Login-page specific inputs */
+.name-input,
+.password-input {
+  width: 240px;
+  padding: 13px 16px;
+  margin-bottom: 15px;
+  font-size: 15px;
+  border-radius: var(--radius-input);
+  border: 2px solid var(--tan);
+  background-color: #fff;
+  color: #333;
+  transition: var(--transition);
+}
+
+.dropdown-select {
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 15px;
+  border: 2px solid var(--tan);
+  border-radius: var(--radius-input);
+  background-color: #fff;
+  color: transparent;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 12 12'%3E%3Cpath fill='%232d5016' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 12px center;
+  padding-left: 40px;
+  font-weight: 500;
+  transition: var(--transition);
+  margin-bottom: 15px;
+}
+
+.dropdown-select:hover {
+  border-color: var(--green);
+  background-color: var(--card-flat);
+  box-shadow: 0 3px 10px rgba(212, 165, 116, 0.2);
+}
+
+.dropdown-select:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 12px rgba(45, 80, 22, 0.3);
+  background-color: #fff;
+  color: #333;
+}
+
+.dropdown-select option {
+  color: #333;
+}
+
+.dropdown-select-visible {
+  color: #333 !important;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+/* ── 5. Buttons ───────────────────────────────────────────── */
+.btn {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: "Cairo", sans-serif;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-light) 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-btn);
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.btn:hover {
+  background: linear-gradient(135deg, var(--green-light) 0%, var(--green) 100%);
+  box-shadow: 0 6px 20px rgba(45, 80, 22, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(45, 80, 22, 0.25);
+}
+
+.btn.primary {
+  display: block;
+  margin: 30px auto 0;
+}
+
+.btn.ghost {
+  background: #fff;
+  border: 2px solid var(--tan);
+  color: var(--green);
+  box-shadow: none;
+  margin-inline-start: 8px;
+}
+
+.btn.ghost:hover {
+  background-color: var(--card-flat);
+  border-color: var(--green);
+  box-shadow: 0 3px 10px rgba(45, 80, 22, 0.12);
+}
+
+.btn.secondary {
+  background: var(--tan);
+  color: #fff;
+}
+
+.btn.delete {
+  padding: 8px 14px;
+  font-size: 13px;
+  background: var(--danger);
+  box-shadow: none;
+}
+
+.btn.delete:hover {
+  background: var(--danger-dark);
+  box-shadow: 0 3px 10px rgba(220, 53, 69, 0.3);
+}
+
+.btn.back {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 15px;
+}
+
+.login-btn {
+  width: 240px;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: "Cairo", sans-serif;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-light) 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-btn);
+  letter-spacing: 0.5px;
+}
+
+.login-btn:hover {
+  background: linear-gradient(135deg, var(--green-light) 0%, var(--green) 100%);
+  box-shadow: 0 6px 20px rgba(45, 80, 22, 0.35);
+  transform: translateY(-2px);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(45, 80, 22, 0.25);
+}
+
+.action-btn {
+  padding: 12px 30px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "Cairo", sans-serif;
+  border-radius: var(--radius-btn);
+  border: 2px solid var(--tan);
+  background-color: #fff;
+  color: var(--green);
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 0.3px;
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+.exam-btn {
+  background-color: var(--tan);
+  color: #fff;
+}
+
+.exam-btn:hover {
+  background-color: var(--tan-dark);
+  border-color: var(--green);
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+  transform: translateY(-2px);
+}
+
+.result-btn {
+  background-color: #fff;
+  color: var(--green);
+  border-color: var(--tan);
+}
+
+.result-btn:hover {
+  background-color: var(--card-flat);
+  border-color: var(--green);
+  box-shadow: 0 4px 12px rgba(45, 80, 22, 0.15);
+  transform: translateY(-2px);
+}
+
+.actions-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.buttons-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.btn-small {
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: "Cairo", sans-serif;
+}
+
+.btn-small:hover {
+  background: var(--danger-dark);
+}
+
+/* ── 6. Tables ────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+th,
+td {
+  padding: 10px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  color: #333;
+  word-wrap: break-word;
+}
+
+th {
+  background: var(--card-flat);
+  color: var(--green);
+  font-weight: 600;
+  border-bottom: 2px solid var(--tan);
+  font-size: 13px;
+}
+
+tbody tr:hover {
+  background: #f4f9f0;
+}
+
+tbody tr:nth-child(even) {
+  background: #fafaf7;
+}
+
+tbody tr:nth-child(even):hover {
+  background: #f4f9f0;
+}
+
+/* ── 7. Components ────────────────────────────────────────── */
+
+/* Status badges */
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status.active {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.status.inactive {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+/* Messages */
+.msg {
+  padding: 12px;
+  border-radius: var(--radius-input);
+  margin: 15px 0;
+  display: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-right: 4px solid;
+}
+
+.msg.success {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-right-color: var(--success);
+}
+
+.msg.error {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-right-color: var(--danger);
+}
+
+.notice {
+  display: none;
+  padding: 10px;
+  border-radius: var(--radius-input);
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+/* Question items (teacher.html builder) */
+.question-item {
+  background-color: var(--card-flat);
+  padding: 15px;
+  border-radius: var(--radius-input);
+  border-right: 4px solid var(--tan);
+  margin-bottom: 15px;
+}
+
+.question-item p {
+  margin: 8px 0;
+  color: #333;
+  font-size: 14px;
+  text-align: right;
+}
+
+.question-item ul {
+  margin: 10px 0;
+  padding-right: 20px;
+  list-style-position: inside;
+}
+
+.question-item li {
+  color: #555;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+/* Question display (add-questions.html) */
+.question-display {
+  background-color: var(--card-flat);
+  padding: 18px;
+  border-radius: 8px;
+  border-right: 5px solid var(--green);
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.question-display .q-number {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.question-display .q-text {
+  color: #333;
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.question-display .q-type {
+  color: var(--text-light);
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.question-display .q-answer {
+  background: #fff;
+  padding: 10px 12px;
+  border-radius: var(--radius-input);
+  margin: 10px 0;
+  border-right: 3px solid var(--green);
+}
+
+.question-display .answer-label {
+  color: var(--green);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.question-display .answer-value {
+  color: #333;
+  margin-top: 4px;
+}
+
+/* Score circle (results.html) */
+.result-box {
+  max-width: 500px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.score-circle {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 8px solid var(--green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 30px auto;
+  background: var(--card-flat);
+}
+
+.score-percent {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.score-fraction {
+  font-size: 16px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 10px 0 20px;
+}
+
+.badge.pass {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.badge.fail {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.meta {
+  color: #555;
+  font-size: 15px;
+  margin: 6px 0;
+}
+
+/* Timer (go to exam.html) */
+#timer {
+  font-size: 18px;
+  color: var(--green);
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Video preview (go to exam.html) */
+#videoPreview {
+  width: 160px;
+  height: 120px;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  border: 2px solid var(--green);
+  border-radius: var(--radius-input);
+  z-index: 1000;
+}
+
+/* Warning banner (go to exam.html) */
+#warnBanner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--danger);
+  color: #fff;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 14px;
+  letter-spacing: 0.5px;
+}
+
+/* Student count label */
+.student-count {
+  color: var(--green);
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+/* Question form (teacher.html) */
+.question-form {
+  background-color: var(--card-flat);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* Teacher container */
+.teacher-container {
+  max-width: 700px;
+}
+
+/* Questions list */
+#questionsList {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.list {
+  margin-top: 15px;
+}
+
+/* Horizontal rule */
+hr {
+  border: none;
+  height: 1px;
+  background: #ddd;
+  margin: 30px 0;
+}
+
+/* ── 8. Page-Specific ─────────────────────────────────────── */
+
+/* Admin grid (admin.html) */
+.admin-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.admin-card {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  border-right: 6px solid var(--tan);
+  border-top: 3px solid var(--green);
+  transition: var(--transition);
+  text-align: center;
+  cursor: pointer;
+}
+
+.admin-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-5px);
+}
+
+.admin-card h2 {
+  font-size: 22px;
+  margin: 15px 0 10px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.admin-card p {
+  color: var(--text-light);
+  font-size: 14px;
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.admin-card .icon {
+  font-size: 48px;
+  margin: 10px 0;
+}
+
+.admin-card .btn {
+  width: 100%;
+  padding: 12px;
+}
+
+/* Exam info banner (manage-exams.html) */
+.exam-info-banner {
+  background: var(--green-bg);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Session log entry (mange-user.html) */
+.log-entry {
+  background: var(--card-flat);
+  border-right: 4px solid var(--green);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.log-entry-header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.log-entry-details {
+  margin-top: 10px;
+  font-size: 14px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ── 9. Utilities ─────────────────────────────────────────── */
+.hidden {
+  display: none;
+}
+
+.center {
+  text-align: center;
+}
+
+/* ── 10. Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  body {
+    padding: 20px 12px;
+  }
+
+  .h1 {
+    font-size: 28px;
+  }
+
+  .box {
+    padding: 20px 18px;
+  }
+
+  .card {
+    width: 95%;
+    padding: 25px;
+  }
+
+  .dropdown-container {
+    padding: 20px 18px;
+    margin: 20px auto;
+  }
+
+  .name-input,
+  .password-input,
+  .login-btn {
+    width: 100%;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .group {
+    min-width: 100%;
+  }
+
+  .actions-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .action-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 8px 4px;
+  }
+
+  .buttons-row {
+    justify-content: center;
+  }
+
+  .score-circle {
+    width: 130px;
+    height: 130px;
+  }
+
+  .score-percent {
+    font-size: 34px;
+  }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الامتحان الإلكتروني</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="backend/api.js"></script>
+</head>
+<body>
+    <h1 class="h1">مرحبا بكم في نظام الامتحان الإلكتروني</h1>
+    <p class="paragraph">الرجاء اختيار نوع المستخدم ثم إدخال بيانات الدخول</p>
+    <div class="dropdown-container">
+        <select id="userType" class="dropdown-select dropdown-select-visible">
+            <option value="طالب">طالب</option>
+            <option value="مشرف">مشرف</option>
+            <option value="معلم">معلم</option>
+        </select>
+        <br>
+        <input id="userName" type="text" placeholder="أدخل اسمك" required class="name-input">
+        <br>
+        <input id="userPassword" type="password" placeholder="أدخل كلمة المرور" required class="password-input">
+        <br>
+        <button type="button" class="login-btn" onclick="login()">تسجيل الدخول</button>
+    </div>
+    <script>
+        async function login() {
+            const userType = document.getElementById('userType').value;
+            const userName = document.getElementById('userName').value.trim();
+            const userPassword = document.getElementById('userPassword').value;
+            const btn = document.querySelector('.login-btn');
+
+            if (!userName || !userPassword) {
+                alert('الرجاء إدخال الاسم وكلمة المرور');
+                return;
+            }
+
+            btn.textContent = 'جارٍ التحقق...';
+            btn.disabled = true;
+
+            try {
+                const res = await API.login(userType, userName, userPassword);
+                if (!res.success) {
+                    alert(res.message || 'خطأ في تسجيل الدخول');
+                    return;
+                }
+
+                localStorage.setItem('authToken',    res.data.token);
+                localStorage.setItem('currentUser',  JSON.stringify(res.data.user));
+
+                const role = res.data.user.role;
+                if (role === 'admin')   { localStorage.setItem('adminLoggedIn', 'true'); window.location.href = 'admin.html'; }
+                else if (role === 'teacher') window.location.href = 'teacher.html';
+                else                         window.location.href = 'student2.html';
+
+            } catch (e) {
+                alert(e.message);
+            } finally {
+                btn.textContent = 'تسجيل الدخول';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

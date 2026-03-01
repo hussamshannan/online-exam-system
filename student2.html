@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الطالب</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="backend/api.js"></script>
+</head>
+<body>
+  <h1 class="h1">اختر من بين الخيارات التالية</h1>
+  <p class="paragraph" id="welcomeMsg"></p>
+
+  <div class="actions-container">
+    <a href="go to exam.html">
+      <button class="action-btn exam-btn">الامتحان الآن</button>
+    </a>
+    <a href="results.html">
+      <button class="action-btn result-btn">عرض النتيجة</button>
+    </a>
+  </div>
+
+  <div class="center" style="margin-top:40px">
+    <button class="btn ghost" onclick="logout()">تسجيل الخروج</button>
+  </div>
+
+  <script>
+    // Verify session on load
+    (async function(){
+      const res = await API.me().catch(() => null);
+      if (!res || !res.success) {
+        window.location.href = 'index.html';
+        return;
+      }
+      // Refresh stored user
+      localStorage.setItem('currentUser', JSON.stringify(res.data));
+      const name = res.data.name || '';
+      if (name) document.getElementById('welcomeMsg').textContent = 'مرحباً ' + name;
+    })();
+
+    async function logout() {
+      await API.logout().catch(() => {});
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

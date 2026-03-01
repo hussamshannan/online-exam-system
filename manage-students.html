@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>إدارة الطلاب</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
+	<script src="backend/api.js"></script>
+</head>
+<body>
+	<h1 class="h1">إدارة الطلاب</h1>
+	<p class="paragraph">إضافة طالب جديد أو حذف طالب موجود</p>
+	
+	<div class="container">
+		<!-- Add Student Form -->
+		<div class="box">
+			<h2>إضافة طالب جديد</h2>
+			
+			<div class="row">
+				<div class="group">
+					<label>اسم الطالب</label>
+					<input id="studentName" type="text" placeholder="مثال: أحمد محمد">
+				</div>
+				<div class="group">
+					<label>البريد الإلكتروني</label>
+					<input id="studentEmail" type="email" placeholder="مثال: ahmed@example.com">
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="group">
+					<label>كلمة المرور</label>
+					<input id="studentPassword" type="password" placeholder="أدخل كلمة مرور آمنة">
+				</div>
+				<div class="group">
+					<label>رقم الجلوس</label>
+					<input id="studentRoll" type="text" placeholder="مثال: 001">
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="group">
+					<label>الكلية</label>
+					<input id="studentCollege" type="text" placeholder="مثال: كلية الهندسة">
+				</div>
+				<div class="group">
+					<label>الدفعة</label>
+					<input id="studentBatch" type="text" placeholder="مثال :27">
+				</div>
+			</div>
+
+			<div class="buttons-row">
+				<button id="addBtn" class="btn">إضافة الطالب</button>
+				<button id="clearBtn" class="btn ghost">مسح</button>
+			</div>
+
+			<div id="msg" class="msg"></div>
+		</div>
+
+		<!-- Students List -->
+		<div class="box">
+			<h2>قائمة الطلاب المسجلين</h2>
+			<div class="student-count">إجمالي الطلاب: <span id="count">0</span></div>
+			
+			<div id="studentsList"></div>
+			
+			<table id="studentsTable">
+				<thead>
+					<tr>
+						<th>اسم الطالب</th>
+						<th>البريد الإلكتروني</th>
+						<th>رقم الجلوس</th>					<th>الكلية</th>
+					<th>الدفعة</th>						<th>الحالة</th>
+						<th>إجراء</th>
+					</tr>
+				</thead>
+				<tbody id="tableBody">
+					<!-- Will be filled by JavaScript -->
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Back Button -->
+		<div class="center" style="margin-top:30px">
+			<a href="admin.html"><button class="btn back">العودة إلى لوحة التحكم</button></a>
+		</div>
+	</div>
+
+	<script>
+	// Verify admin session on load
+	(async function(){
+		const res = await API.me().catch(() => null);
+		if (!res || !res.success || res.data.role !== 'admin') {
+			window.location.href = 'index.html';
+		}
+	})();
+
+	(function(){
+		const studentName     = document.getElementById('studentName');
+		const studentEmail    = document.getElementById('studentEmail');
+		const studentPassword = document.getElementById('studentPassword');
+		const studentRoll     = document.getElementById('studentRoll');
+		const studentCollege  = document.getElementById('studentCollege');
+		const studentBatch    = document.getElementById('studentBatch');
+		const addBtn          = document.getElementById('addBtn');
+		const clearBtn        = document.getElementById('clearBtn');
+		const msg             = document.getElementById('msg');
+		const tableBody       = document.getElementById('tableBody');
+		const count           = document.getElementById('count');
+
+		function showMsg(text, isSuccess = true) {
+			msg.textContent  = text;
+			msg.className    = 'msg ' + (isSuccess ? 'success' : 'error');
+			msg.style.display = 'block';
+			setTimeout(() => { msg.style.display = 'none'; }, 4000);
+		}
+
+		function renderStudents(students) {
+			if (!students.length) {
+				tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999">لا توجد طلاب مسجلين</td></tr>';
+				count.textContent = '0';
+				return;
+			}
+			tableBody.innerHTML = '';
+			students.forEach(s => {
+				const statusText  = s.status === 'active' ? 'نشط' : 'معطل';
+				const statusClass = s.status === 'active' ? 'active' : 'inactive';
+				const row = document.createElement('tr');
+				row.innerHTML = `
+					<td>${s.name}</td>
+					<td>${s.email}</td>
+					<td>${s.roll_number || ''}</td>
+					<td>${s.college || ''}</td>
+					<td>${s.batch || ''}</td>
+					<td><span class="status ${statusClass}">${statusText}</span></td>
+					<td><button class="btn delete" onclick="removeStudent(${s.id},'${s.name.replace(/'/g,'')}')">حذف</button></td>
+				`;
+				tableBody.appendChild(row);
+			});
+			count.textContent = students.length;
+		}
+
+		async function loadStudents() {
+			tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa">جارٍ التحميل...</td></tr>';
+			const res = await API.getStudents();
+			if (!res.success) { showMsg(res.message, false); return; }
+			renderStudents(res.data || []);
+		}
+
+		window.removeStudent = async function(id, name) {
+			if (!confirm(`هل تريد حذف الطالب ${name}؟`)) return;
+			const res = await API.deleteStudent(id);
+			showMsg(res.message, res.success);
+			if (res.success) loadStudents();
+		};
+
+		addBtn.addEventListener('click', async (e) => {
+			e.preventDefault();
+			const data = {
+				name:     studentName.value.trim(),
+				email:    studentEmail.value.trim(),
+				password: studentPassword.value.trim(),
+				roll:     studentRoll.value.trim(),
+				college:  studentCollege.value.trim(),
+				batch:    studentBatch.value.trim(),
+			};
+			if (Object.values(data).some(v => !v)) {
+				showMsg('❌ أكمل جميع الحقول المطلوبة', false);
+				return;
+			}
+			addBtn.disabled = true;
+			const res = await API.addStudent(data);
+			showMsg(res.message, res.success);
+			if (res.success) {
+				studentName.value = studentEmail.value = studentPassword.value =
+				studentRoll.value = studentCollege.value = studentBatch.value = '';
+				loadStudents();
+				studentName.focus();
+			}
+			addBtn.disabled = false;
+		});
+
+		clearBtn.addEventListener('click', () => {
+			studentName.value = studentEmail.value = studentPassword.value =
+			studentRoll.value = studentCollege.value = studentBatch.value = '';
+			studentName.focus();
+		});
+
+		loadStudents();
+	})();
+	</script>
+
+</body>
+</html>

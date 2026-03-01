@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>لوحة المشرف</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
+	<script src="backend/api.js"></script>
+</head>
+<body>
+	<h1 class="h1">لوحة التحكم — المشرف</h1>
+	<p class="paragraph">إدارة المستخدمين والامتحانات والإشراف على الطلاب</p>
+	
+	<div class="admin-container">
+		<!-- Admin Cards -->
+		<div class="admin-grid">
+			<div class="admin-card" onclick="window.location.href='manage-students.html'">
+				<h2>إضافة / حذف طالب</h2>
+				<p>إدارة الطلاب المسجلين</p>
+				<button class="btn">اذهب الآن</button>
+			</div>
+
+			<div class="admin-card" onclick="window.location.href='manage-exams.html'">
+				<h2>إدارة الامتحانات</h2>
+				<p>عرض وحذف وإعادة تشغيل الامتحانات</p>
+				<button class="btn">اذهب الآن</button>
+			</div>
+
+			<div class="admin-card" onclick="window.location.href='mange-user.html'">
+				<h2>مراقبة الطلاب</h2>
+				<p>متابعة نشاط وأداء الطلاب</p>
+				<button class="btn">اذهب الآن</button>
+			</div>
+
+			<div class="admin-card" onclick="logout()">
+				<h2>تسجيل الخروج</h2>
+				<p>الخروج من لوحة التحكم</p>
+				<button class="btn delete">تسجيل الخروج</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Verify admin session on load
+		(async function(){
+			const res = await API.me().catch(() => null);
+			if (!res || !res.success || res.data.role !== 'admin') {
+				window.location.href = 'index.html';
+			}
+		})();
+
+		async function logout() {
+			if (confirm('هل تريد تسجيل الخروج؟')) {
+				await API.logout().catch(() => {});
+				localStorage.removeItem('adminLoggedIn');
+				localStorage.removeItem('authToken');
+				localStorage.removeItem('currentUser');
+				window.location.href = 'index.html';
+			}
+		}
+	</script>
+</body>
+</html>

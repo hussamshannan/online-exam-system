@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>رفع امتحان</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="backend/api.js"></script>
+</head>
+<body>
+  <h1 class="h1">رفع امتحان جاهز</h1>
+  <p class="paragraph">ارفع ملف الامتحان بصيغة JSON</p>
+
+  <div class="dropdown-container">
+    <label style="display:block;font-weight:600;color:#333;margin-bottom:6px">ملف الامتحان (.json)</label>
+    <input id="fileInput" type="file" accept=".json" class="name-input" style="padding:10px">
+    <br>
+    <button class="login-btn" id="uploadBtn" onclick="uploadExam()">رفع وحفظ</button>
+
+    <div id="msg"     style="display:none;margin-top:12px;padding:10px;border-radius:6px;font-size:14px;font-weight:600"></div>
+    <div id="preview" style="display:none;margin-top:16px;background:#f9f8f3;padding:14px;border-radius:8px;font-size:14px;color:#333;line-height:1.8;border-right:4px solid #2d5016"></div>
+  </div>
+
+  <div class="center" style="margin-top:20px">
+    <a href="exam make.html"><button class="btn ghost">رجوع</button></a>
+  </div>
+
+  <details style="max-width:500px;margin:30px auto;font-size:13px;color:#555">
+    <summary style="cursor:pointer;color:#2d5016;font-weight:600">مثال على تنسيق ملف JSON</summary>
+    <pre style="background:#f4f6f1;padding:14px;border-radius:6px;overflow:auto;margin-top:8px">{
+  "college": "كلية الهندسة",
+  "department": "هندسة برمجيات",
+  "batch": "الدفعة الأولى",
+  "subject": "برمجة 1",
+  "duration": 60,
+  "questions": [
+    { "type":"mcq","text":"سؤال MCQ","mark":2,
+      "a":"خيار أ","b":"خيار ب","c":"خيار ج","d":"خيار د","correct":"a" },
+    { "type":"tf","text":"سؤال صح/خطأ","mark":1,"correct":"true" },
+    { "type":"short","text":"سؤال قصير","mark":3,"answer":"الإجابة" }
+  ]
+}</pre>
+  </details>
+
+  <script>
+    function showMsg(text, ok) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.style.background = ok ? '#d4edda' : '#f8d7da';
+      el.style.color      = ok ? '#155724' : '#721c24';
+      el.style.display    = 'block';
+    }
+
+    async function uploadExam() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file)                        { showMsg('الرجاء اختيار ملف أولاً', false); return; }
+      if (!file.name.endsWith('.json')) { showMsg('يجب أن يكون الملف بصيغة .json', false); return; }
+
+      const btn = document.getElementById('uploadBtn');
+      btn.disabled = true; btn.textContent = 'جارٍ الرفع...';
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        let exam;
+        try {
+          exam = JSON.parse(e.target.result);
+        } catch {
+          showMsg('خطأ في قراءة الملف: تأكد من أن الملف JSON صحيح', false);
+          btn.disabled = false; btn.textContent = 'رفع وحفظ';
+          return;
+        }
+
+        if (!exam.questions || !Array.isArray(exam.questions) || !exam.questions.length) {
+          showMsg('الملف لا يحتوي على أسئلة صحيحة', false);
+          btn.disabled = false; btn.textContent = 'رفع وحفظ';
+          return;
+        }
+
+        // Show preview
+        document.getElementById('preview').innerHTML =
+          '<strong>معاينة الملف ✓</strong><br>' +
+          (exam.college    ? '<strong>الكلية:</strong> '  + exam.college    + '<br>' : '') +
+          (exam.subject    ? '<strong>المادة:</strong> '  + exam.subject    + '<br>' : '') +
+          '<strong>عدد الأسئلة:</strong> ' + exam.questions.length;
+        document.getElementById('preview').style.display = 'block';
+
+        // If duration is missing, save to localStorage and go to exam-time.html for completion
+        if (!exam.duration) {
+          localStorage.setItem('examData',      JSON.stringify(exam));
+          localStorage.setItem('examQuestions', JSON.stringify(exam.questions));
+          showMsg('حُمِّل الملف. الرجاء تحديد مدة الامتحان...', true);
+          setTimeout(() => { window.location.href = 'exam-time.html'; }, 1200);
+          btn.disabled = false; btn.textContent = 'رفع وحفظ';
+          return;
+        }
+
+        // Save directly to backend
+        try {
+          const res = await API.saveExam(exam);
+          showMsg(res.message, res.success);
+          if (res.success) {
+            setTimeout(() => { window.location.href = 'teacher.html'; }, 1500);
+          }
+        } catch(err) {
+          showMsg(err.message, false);
+        }
+        btn.disabled = false; btn.textContent = 'رفع وحفظ';
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>

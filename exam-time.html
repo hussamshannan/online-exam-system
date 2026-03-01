@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحديد زمن الامتحان</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="backend/api.js"></script>
+</head>
+<body>
+  <h1 class="h1">تحديد زمن الامتحان</h1>
+  <p class="paragraph">أكمل بيانات الامتحان ثم احفظ</p>
+
+  <div class="dropdown-container" style="min-width:320px">
+    <!-- Metadata (pre-filled from localStorage if available) -->
+    <label style="display:block;font-weight:600;color:#333;margin-bottom:5px">المادة <span style="color:red">*</span></label>
+    <input id="subject" type="text" placeholder="مثال: الرياضيات" class="name-input">
+    <br>
+    <label style="display:block;font-weight:600;color:#333;margin-bottom:5px;margin-top:10px">الكلية</label>
+    <input id="college" type="text" placeholder="مثال: كلية الهندسة" class="name-input">
+    <br>
+    <label style="display:block;font-weight:600;color:#333;margin-bottom:5px;margin-top:10px">القسم</label>
+    <input id="department" type="text" placeholder="مثال: هندسة برمجيات" class="name-input">
+    <br>
+    <label style="display:block;font-weight:600;color:#333;margin-bottom:5px;margin-top:10px">الدفعة</label>
+    <input id="batch" type="text" placeholder="مثال: الدفعة الأولى" class="name-input">
+    <br>
+    <label style="display:block;font-weight:600;color:#333;margin-bottom:5px;margin-top:10px">مدة الامتحان (دقائق) <span style="color:red">*</span></label>
+    <input id="duration" type="number" min="1" placeholder="مثال: 90" class="name-input">
+    <br>
+    <div id="qCount" style="color:#555;font-size:14px;margin:8px 0 12px"></div>
+    <button class="login-btn" id="saveBtn" onclick="saveExam()">حفظ الامتحان</button>
+    <div id="msg" style="display:none;margin-top:12px;padding:10px;border-radius:6px;font-size:14px;font-weight:600"></div>
+  </div>
+
+  <div class="center" style="margin-top:20px">
+    <a href="add-questions.html"><button class="btn ghost">رجوع</button></a>
+  </div>
+
+  <script>
+    // Pre-fill from localStorage if teacher.html step1 data was saved there
+    const saved = JSON.parse(localStorage.getItem('examData') || 'null');
+    if (saved) {
+      if (saved.subject)    document.getElementById('subject').value    = saved.subject;
+      if (saved.college)    document.getElementById('college').value    = saved.college;
+      if (saved.department) document.getElementById('department').value = saved.department;
+      if (saved.batch)      document.getElementById('batch').value      = saved.batch;
+      if (saved.duration)   document.getElementById('duration').value   = saved.duration;
+    }
+
+    const questions = JSON.parse(localStorage.getItem('examQuestions') || '[]');
+    if (questions.length) {
+      document.getElementById('qCount').textContent = 'عدد الأسئلة: ' + questions.length;
+    }
+
+    function showMsg(text, ok) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.style.background = ok ? '#d4edda' : '#f8d7da';
+      el.style.color      = ok ? '#155724' : '#721c24';
+      el.style.display    = 'block';
+    }
+
+    async function saveExam() {
+      const subject    = document.getElementById('subject').value.trim();
+      const college    = document.getElementById('college').value.trim();
+      const department = document.getElementById('department').value.trim();
+      const batch      = document.getElementById('batch').value.trim();
+      const duration   = parseInt(document.getElementById('duration').value);
+
+      if (!subject)    { showMsg('المادة مطلوبة', false); return; }
+      if (!duration || duration < 1) { showMsg('الرجاء إدخال مدة صحيحة', false); return; }
+      if (!questions.length) { showMsg('لا توجد أسئلة. ارجع وأضف الأسئلة أولاً', false); return; }
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
+
+      try {
+        const res = await API.saveExam({ college, department, batch, subject, duration, questions });
+        showMsg(res.message, res.success);
+        if (res.success) {
+          localStorage.removeItem('examQuestions');
+          localStorage.removeItem('examData');
+          setTimeout(() => { window.location.href = 'teacher.html'; }, 1200);
+        }
+      } catch(e) {
+        showMsg(e.message, false);
+      } finally {
+        btn.disabled = false; btn.textContent = 'حفظ الامتحان';
+      }
+    }
+  </script>
+</body>
+</html>

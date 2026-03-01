@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة الامتحانات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="backend/api.js"></script>
+</head>
+<body>
+  <h1 class="h1">إدارة الامتحانات</h1>
+  <p class="paragraph">عرض الامتحان النشط الحالي</p>
+
+  <div class="container">
+    <div class="box">
+      <h2>الامتحان الحالي</h2>
+      <div id="examContent"><p style="color:#aaa;text-align:center;padding:20px">جارٍ التحميل...</p></div>
+    </div>
+
+    <div class="center" style="margin-top:30px">
+      <a href="admin.html"><button class="btn back">العودة إلى لوحة التحكم</button></a>
+    </div>
+  </div>
+
+  <script>
+    // Verify admin session on load
+    (async function(){
+      const res = await API.me().catch(() => null);
+      if (!res || !res.success || res.data.role !== 'admin') {
+        window.location.href = 'index.html';
+      }
+    })();
+
+    async function render() {
+      const el  = document.getElementById('examContent');
+      const res = await API.getExam().catch(e => ({ success: false, message: e.message }));
+
+      if (!res.success || !res.data) {
+        el.innerHTML = '<p style="color:#999;text-align:center;padding:30px">لا يوجد امتحان محفوظ حالياً.</p>';
+        return;
+      }
+
+      const exam      = res.data;
+      const questions = exam.questions || [];
+      const total     = questions.reduce((s, q) => s + parseFloat(q.mark || 0), 0);
+
+      const rows = questions.map((q, i) => {
+        const typeLabel = q.type === 'mcq' ? 'اختيار متعدد' : q.type === 'tf' ? 'صح/خطأ' : 'إجابة قصيرة';
+        return `<tr>
+          <td>${i + 1}</td>
+          <td>${q.text}</td>
+          <td>${typeLabel}</td>
+          <td>${q.mark}</td>
+        </tr>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="exam-info-banner">
+          ${exam.college || '—'} &mdash; ${exam.department || '—'} &mdash; ${exam.subject}
+          &mdash; الدفعة: ${exam.batch || '—'}
+          &mdash; المدة: ${exam.duration} دقيقة
+          &mdash; المجموع: ${total} درجة
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:40px">#</th>
+            <th>السؤال</th>
+            <th>النوع</th>
+            <th>الدرجة</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="center" style="margin-top:20px">
+          <button class="btn delete" onclick="clearExam(${exam.id})">حذف الامتحان</button>
+        </div>`;
+    }
+
+    async function clearExam(id) {
+      if (!confirm('هل تريد حذف الامتحان الحالي؟ لا يمكن التراجع.')) return;
+      const res = await API.deleteExam(id);
+      alert(res.message);
+      if (res.success) render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
