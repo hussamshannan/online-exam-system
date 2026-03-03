@@ -7,7 +7,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 // ─── GET  →  return the active exam with its questions ────────────────────────
 if ($method === 'GET') {
-    authUser($db);   // any logged-in user
+    $user = authUser($db);   // any logged-in user
 
     $exam = $db->query(
         'SELECT * FROM exams WHERE is_active = 1 ORDER BY created_at DESC LIMIT 1'
@@ -21,14 +21,24 @@ if ($method === 'GET') {
     $stmt->execute([$exam['id']]);
     $exam['questions'] = $stmt->fetchAll();
 
+    $isStudent = $user['role'] === 'student';
+
     // Normalise question fields to match the frontend's expected shape
     foreach ($exam['questions'] as &$q) {
-        $q['a']       = $q['option_a'];
-        $q['b']       = $q['option_b'];
-        $q['c']       = $q['option_c'];
-        $q['d']       = $q['option_d'];
-        $q['correct'] = $q['correct_answer'];
-        $q['answer']  = $q['correct_answer'];  // short-answer reference
+        $q['a'] = $q['option_a'];
+        $q['b'] = $q['option_b'];
+        $q['c'] = $q['option_c'];
+        $q['d'] = $q['option_d'];
+
+        if ($isStudent) {
+            // Never expose correct answers to the student sitting the exam
+            unset($q['correct_answer'], $q['option_a'], $q['option_b'],
+                  $q['option_c'], $q['option_d']);
+        } else {
+            // Admins / teachers get the full data
+            $q['correct'] = $q['correct_answer'];
+            $q['answer']  = $q['correct_answer'];
+        }
     }
     unset($q);
 

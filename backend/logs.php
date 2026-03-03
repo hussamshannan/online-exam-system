@@ -39,6 +39,20 @@ if ($method === 'GET') {
     ok($rows);
 }
 
+// ─── POST  →  delete a single session (admin) ────────────────────────────────
+if ($method === 'POST') {
+    authUser($db, 'admin');
+    $b  = body();
+    $id = (int)($b['id'] ?? 0);
+    if (!$id) fail('معرّف الجلسة مطلوب');
+
+    $stmt = $db->prepare('DELETE FROM exam_sessions WHERE id = ?');
+    $stmt->execute([$id]);
+    if ($stmt->rowCount() === 0) fail('السجل غير موجود', 404);
+
+    ok(null, 'تم حذف السجل');
+}
+
 // ─── DELETE  →  wipe all session logs (admin) ────────────────────────────────
 if ($method === 'DELETE') {
     authUser($db, 'admin');

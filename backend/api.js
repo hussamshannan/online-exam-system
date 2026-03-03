@@ -100,6 +100,9 @@ const API = (() => {
     getLogs() {
       return request('logs.php', 'GET');
     },
+    deleteLog(id) {
+      return request('logs.php', 'POST', { id });
+    },
     clearLogs() {
       return request('logs.php', 'DELETE');
     },

@@ -68,7 +68,10 @@
                   ${entry.student_email || ''} — رقم الجلوس: ${entry.roll_number || '—'}
                 </span>
               </div>
-              <div class="meta" style="font-size:13px">${submitted}</div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="meta" style="font-size:13px">${submitted}</div>
+                <button class="btn-small" onclick="deleteEntry(${entry.id})">حذف</button>
+              </div>
             </div>
             <div class="log-entry-details">
               <span><strong>المادة:</strong> ${entry.subject || '—'}</span>
@@ -81,6 +84,13 @@
             </div>
           </div>`;
       }).join('');
+    }
+
+    async function deleteEntry(id) {
+      if (!confirm('هل تريد حذف هذا السجل؟')) return;
+      const res = await API.deleteLog(id).catch(e => ({ success: false, message: e.message }));
+      if (res.success) render();
+      else alert(res.message);
     }
 
     async function clearAll() {
