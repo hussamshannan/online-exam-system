@@ -8,36 +8,122 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="backend/api.js"></script>
+  <style>
+    .student-dashboard {
+      max-width: 540px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .welcome-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px 30px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--green);
+      margin-bottom: 24px;
+    }
+    .student-avatar {
+      width: 72px;
+      height: 72px;
+      background: var(--green);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(45,106,79,.28);
+    }
+    .welcome-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 4px;
+    }
+    .welcome-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+    .student-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .student-action-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 16px;
+      cursor: pointer;
+      transition: var(--transition-slow);
+      box-shadow: var(--shadow-xs);
+      text-align: center;
+    }
+    .student-action-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+    .student-action-card.primary-card {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+    .student-action-card.primary-card:hover {
+      background: var(--green-light);
+      box-shadow: 0 6px 22px rgba(45,106,79,.32);
+    }
+    .student-action-card .card-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+    .student-action-card .card-label { font-size: 15px; font-weight: 700; }
+    .student-action-card.primary-card .card-label { color: #fff; }
+    .student-action-card:not(.primary-card) .card-label { color: var(--green-deep); }
+  </style>
 </head>
 <body>
-  <h1 class="h1">اختر من بين الخيارات التالية</h1>
-  <p class="paragraph" id="welcomeMsg"></p>
-
-  <div class="actions-container">
-    <a href="go to exam.html">
-      <button class="action-btn exam-btn">الامتحان الآن</button>
-    </a>
-    <a href="results.html">
-      <button class="action-btn result-btn">عرض النتيجة</button>
-    </a>
+  <div class="brand-header" style="margin-bottom:20px">
+    <div class="brand-icon">🎓</div>
+    <h1 class="h1">نظام الامتحان الإلكتروني</h1>
   </div>
 
-  <div class="center" style="margin-top:40px">
-    <button class="btn ghost" onclick="logout()">تسجيل الخروج</button>
+  <div class="student-dashboard">
+    <div class="welcome-card">
+      <div class="student-avatar">👤</div>
+      <div class="welcome-name" id="welcomeName">مرحباً بك</div>
+      <div class="welcome-sub" id="welcomeSub">اختر ما تريد فعله</div>
+
+      <div class="student-actions">
+        <div class="student-action-card primary-card" onclick="window.location.href='go to exam.html'">
+          <span class="card-icon">✏️</span>
+          <span class="card-label">أدِّ الامتحان</span>
+        </div>
+        <div class="student-action-card" onclick="window.location.href='results.html'">
+          <span class="card-icon">📊</span>
+          <span class="card-label">عرض النتائج</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn ghost" onclick="logout()" style="width:100%;justify-content:center;padding:12px">
+      تسجيل الخروج
+    </button>
   </div>
 
   <script>
-    // Verify session on load
     (async function(){
       const res = await API.me().catch(() => null);
-      if (!res || !res.success) {
+      if (!res || !res.success || res.data.role !== 'student') {
         window.location.href = 'index.html';
         return;
       }
-      // Refresh stored user
       localStorage.setItem('currentUser', JSON.stringify(res.data));
       const name = res.data.name || '';
-      if (name) document.getElementById('welcomeMsg').textContent = 'مرحباً ' + name;
+      if (name) {
+        document.getElementById('welcomeName').textContent = 'مرحباً، ' + name;
+        document.getElementById('welcomeSub').textContent =
+          (res.data.college ? res.data.college + ' — ' : '') +
+          (res.data.batch   ? 'دفعة ' + res.data.batch   : 'اختر ما تريد فعله');
+      }
     })();
 
     async function logout() {

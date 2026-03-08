@@ -7,10 +7,123 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
-	<script src="backend/api.js"></script>
+	<script src="backend/api.js?v=5"></script>
+	<style>
+		.college-group  { margin-bottom: 28px; }
+		.college-title  { font-size: 18px; font-weight: 700; color: #2d5016; border-bottom: 2px solid #2d5016; padding-bottom: 6px; margin-bottom: 12px; }
+		.dept-group     { margin-right: 16px; margin-bottom: 16px; }
+		.dept-title     { font-size: 15px; font-weight: 600; color: #444; margin-bottom: 8px; }
+		.batch-group    { margin-right: 16px; margin-bottom: 10px; }
+		.batch-title    { font-size: 13px; color: #666; font-weight: 600; margin-bottom: 6px; }
+		.exam-row {
+			display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+			padding: 10px 14px; background: #fff; border: 1px solid #e0e0e0;
+			border-radius: 8px; margin-bottom: 8px;
+		}
+		.exam-row-info  { flex: 1; min-width: 200px; }
+		.exam-row-info strong { font-size: 14px; color: #333; }
+		.exam-row-info small  { color: #888; display: block; font-size: 12px; margin-top: 2px; }
+		.tag-published   { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+		.tag-unpublished { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+		.time-form      { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+		.time-form input { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-family: Cairo, sans-serif; }
+		#activeCount    { font-size: 15px; color: #2d5016; font-weight: 700; }
+		.session-live   { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+		.session-live-card {
+			border: 1px solid #c3e6cb; background: #d4edda; border-radius: 8px;
+			padding: 8px 12px; font-size: 13px; min-width: 180px;
+			cursor: pointer; transition: box-shadow .15s;
+		}
+		.session-live-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+		/* Live-view modal */
+		#liveModal {
+			display: none; position: fixed; inset: 0;
+			background: rgba(0,0,0,.6); z-index: 1000;
+			align-items: center; justify-content: center;
+		}
+		#liveModal.open { display: flex; }
+		#liveModalBox {
+			background: #fff; border-radius: 12px; padding: 24px;
+			min-width: 340px; max-width: 480px; width: 94vw;
+			text-align: center; position: relative;
+		}
+		#liveModalTitle  { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #2d5016; }
+		#liveModalVideo  { width: 100%; border-radius: 8px; border: 2px solid #2d5016; background: #000; min-height: 200px; display: block; }
+		#liveModalStatus { font-size: 12px; color: #888; margin-top: 6px; }
+		#liveModalClose  { position: absolute; top: 10px; left: 14px; background: none; border: none; font-size: 22px; cursor: pointer; color: #666; }
+	</style>
 </head>
 <body>
-	<h1 class="h1">بدء إنشاء الامتحان</h1>
+	<h1 class="h1">لوحة المعلم</h1>
+	<div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
+		<button id="tabCreate"  class="btn"       onclick="switchTab('create')">إنشاء امتحان</button>
+		<button id="tabExams"   class="btn ghost"  onclick="switchTab('exams')">الامتحانات</button>
+		<button id="tabMonitor" class="btn ghost"  onclick="switchTab('monitor')">المراقبة المباشرة</button>
+		<button id="tabGrade"   class="btn ghost"  onclick="switchTab('grade')">تصحيح الإجابات</button>
+		<button class="btn ghost" onclick="logout()">تسجيل الخروج</button>
+	</div>
+
+	<!-- Live-view modal -->
+	<div id="liveModal">
+		<div id="liveModalBox">
+			<button id="liveModalClose" onclick="closeLiveView()">&#10005;</button>
+			<div id="liveModalTitle">—</div>
+			<video id="liveModalVideo" autoplay playsinline muted></video>
+			<div id="liveModalStatus">جارٍ الاتصال...</div>
+		</div>
+	</div>
+
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<!-- TAB: Exam tree                                              -->
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<div id="examsTab" class="hidden">
+		<div class="box">
+			<h2>قائمة الامتحانات — مجمّعة حسب الكلية والقسم والدفعة</h2>
+			<div id="examTree"><p style="color:#aaa;text-align:center;padding:20px">جارٍ التحميل...</p></div>
+		</div>
+	</div>
+
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<!-- TAB: Live monitoring                                        -->
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<div id="monitorTab" class="hidden">
+		<div class="box">
+			<h2>الطلاب النشطون الآن — <span id="activeCount">0</span> طالب</h2>
+			<p class="paragraph" style="font-size:13px">يتم التحديث تلقائياً كل 10 ثوانٍ</p>
+			<div id="liveList"><p style="color:#aaa;text-align:center;padding:20px">جارٍ التحميل...</p></div>
+		</div>
+		<div class="center" style="margin-top:14px">
+			<button class="btn" onclick="window.location.href='mange-user.html'">عرض سجلات الجلسات الكاملة</button>
+		</div>
+	</div>
+
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<!-- TAB: Grading panel                                          -->
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<div id="gradeTab" class="hidden">
+		<div class="box">
+			<h2>قائمة جلسات الامتحانات</h2>
+			<div id="sessionsList"><p style="color:#aaa">جارٍ التحميل...</p></div>
+		</div>
+		<!-- Session detail modal (inline) -->
+		<div id="sessionDetail" class="hidden">
+			<div class="box">
+				<h2 id="detailTitle">تفاصيل الجلسة</h2>
+				<div id="answersList"></div>
+				<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+					<button class="btn" onclick="publishResults()">نشر النتيجة ✓</button>
+					<button class="btn delete" onclick="markCheatFail()">رسوب بسبب الغش ✗</button>
+					<button class="btn ghost" onclick="closeDetail()">إغلاق</button>
+				</div>
+				<div id="gradeMsg" class="notice"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<!-- TAB: Create exam                                            -->
+	<!-- ════════════════════════════════════════════════════════════ -->
+	<div id="createTab">
 	<p class="paragraph">أدخل بيانات الكلية والقسم والمادة ثم حدد زمن الامتحان</p>
 	<div class="box">
 
@@ -66,10 +179,14 @@
 			<h2>زمن الامتحان وخيارات الأسئلة</h2>
 			<div class="row">
 				<div class="group"><label>زمن الامتحان (دقيقة)</label><input id="inpDuration" type="number" min="1" placeholder="مثال: 90"></div>
+				<div class="group"><label>وقت البدء (اختياري)</label><input id="inpStartTime" type="datetime-local"></div>
+				<div class="group"><label>وقت الانتهاء (اختياري)</label><input id="inpEndTime" type="datetime-local"></div>
 			</div>
 
 			<div style="margin-top:12px">
-				<button id="loadSaved" class="btn ghost">تحميل امتحان جاهز</button>
+				<button id="loadSaved" class="btn ghost">تحميل من ذاكرة</button>
+				<button id="loadFile"  class="btn ghost">رفع ملف JSON</button>
+				<input  id="fileInput" type="file" accept=".json" style="display:none">
 				<button id="manualAdd" class="btn">أضف أسئلة يدوياً</button>
 				<button id="backStep1" class="btn ghost">الرجوع</button>
 			</div>
@@ -104,7 +221,8 @@
 			<div id="msg3" class="notice"></div>
 		</section>
 
-	</div>
+	</div><!-- end .box -->
+	</div><!-- end #createTab -->
 
 	<script>
 	// Verify teacher session on load
@@ -312,7 +430,10 @@
 			try {
 				const res = await API.saveExam({
 					college: col, department: dept, batch, subject: subj,
-					duration: Number(inpDuration.value), questions
+					duration: Number(inpDuration.value),
+					start_time: document.getElementById('inpStartTime').value || null,
+					end_time:   document.getElementById('inpEndTime').value   || null,
+					questions
 				});
 				showMsg(msg3, res.success ? ('✓ ' + res.message) : ('✗ ' + res.message), res.success);
 			} catch(err) {
@@ -339,10 +460,450 @@
 			const batchOpt = Array.from(inpBatch.options).find(o=>o.value===d.batch);
 			if(batchOpt) inpBatch.value=d.batch; else {inpBatch.value='other'; customBatch.value=d.batch||''; customBatch.style.display='block';}
 			inpDuration.value=d.duration||''; 
-			questions=d.questions||[]; 
+			questions=d.questions||[];
 		}catch(e){}}})();
 
+		// ── File upload (JSON exam file) ───────────────────────────────────────
+		document.getElementById('loadFile').addEventListener('click', ()=>{
+			document.getElementById('fileInput').click();
+		});
+		document.getElementById('fileInput').addEventListener('change', function(){
+			const file = this.files[0];
+			if (!file) return;
+			const reader = new FileReader();
+			reader.onload = function(e){
+				try {
+					const d = JSON.parse(e.target.result);
+					if (!d.questions || !Array.isArray(d.questions) || d.questions.length === 0) {
+						showMsg(msg2, 'الملف لا يحتوي على أسئلة صالحة', false); return;
+					}
+					questions = d.questions;
+					if (d.duration) inpDuration.value = d.duration;
+					loadedInfo.innerHTML = `<p>تم رفع ملف: <strong>${file.name}</strong> — الأسئلة: ${questions.length}</p>`;
+					renderQuestions();
+					showMsg(msg2, 'تم رفع الملف بنجاح');
+				} catch(err) {
+					showMsg(msg2, 'خطأ في قراءة الملف: ' + err.message, false);
+				}
+			};
+			reader.readAsText(file);
+			this.value = '';
+		});
+
 	})();
+
+	// ── WebRTC variables (teacher live-monitor side) ───────────────────────────
+	let monitorInterval = null;
+	let liveSessionId   = null;
+	let supervisorPc    = null;
+	let studentIceSince = 0;
+	let iceStudentTimer = null;
+	const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+	// ── Tab switching ──────────────────────────────────────────────────────────
+	function switchTab(tab) {
+		// Hide all tabs
+		['createTab','examsTab','monitorTab','gradeTab'].forEach(id => {
+			document.getElementById(id).classList.add('hidden');
+		});
+		// Deactivate all tab buttons
+		['tabCreate','tabExams','tabMonitor','tabGrade'].forEach(id => {
+			document.getElementById(id).classList.add('ghost');
+		});
+		clearInterval(monitorInterval);
+
+		if (tab === 'create') {
+			document.getElementById('createTab').classList.remove('hidden');
+			document.getElementById('tabCreate').classList.remove('ghost');
+		} else if (tab === 'exams') {
+			document.getElementById('examsTab').classList.remove('hidden');
+			document.getElementById('tabExams').classList.remove('ghost');
+			loadExams();
+		} else if (tab === 'monitor') {
+			document.getElementById('monitorTab').classList.remove('hidden');
+			document.getElementById('tabMonitor').classList.remove('ghost');
+			loadLiveSessions();
+			monitorInterval = setInterval(loadLiveSessions, 10000);
+		} else {
+			document.getElementById('gradeTab').classList.remove('hidden');
+			document.getElementById('tabGrade').classList.remove('ghost');
+			loadSessions();
+		}
+	}
+
+	async function logout() {
+		await API.logout().catch(() => {});
+		localStorage.removeItem('authToken');
+		localStorage.removeItem('currentUser');
+		window.location.href = 'index.html';
+	}
+
+	// ── Exam tree ──────────────────────────────────────────────────────────────
+	async function loadExams() {
+		const el  = document.getElementById('examTree');
+		const res = await API.getExams().catch(e => ({ success: false, message: e.message }));
+		if (!res.success) { el.innerHTML = `<p style="color:#c00">${res.message}</p>`; return; }
+
+		const exams = res.data || [];
+		if (!exams.length) {
+			el.innerHTML = '<p style="color:#999;text-align:center;padding:20px">لا توجد امتحانات.</p>';
+			return;
+		}
+
+		const tree = {};
+		exams.forEach(e => {
+			const col  = e.college     || 'غير محدد';
+			const dept = e.department  || 'غير محدد';
+			const bat  = e.batch       || 'غير محدد';
+			if (!tree[col])            tree[col] = {};
+			if (!tree[col][dept])      tree[col][dept] = {};
+			if (!tree[col][dept][bat]) tree[col][dept][bat] = [];
+			tree[col][dept][bat].push(e);
+		});
+
+		let html = '';
+		for (const [col, depts] of Object.entries(tree)) {
+			html += `<div class="college-group"><div class="college-title">🏛️ ${esc(col)}</div>`;
+			for (const [dept, batches] of Object.entries(depts)) {
+				html += `<div class="dept-group"><div class="dept-title">📂 ${esc(dept)}</div>`;
+				for (const [bat, exList] of Object.entries(batches)) {
+					html += `<div class="batch-group"><div class="batch-title">👥 ${esc(bat)}</div>`;
+					exList.forEach(exam => {
+						const published = parseInt(exam.is_published);
+						const tagClass  = published ? 'tag-published' : 'tag-unpublished';
+						const tagText   = published ? 'منشور ✓' : 'غير منشور';
+						const timeInfo  = exam.start_time
+							? `${fmtDate(exam.start_time)} ← → ${exam.end_time ? fmtDate(exam.end_time) : 'مفتوح'}`
+							: 'لا يوجد نافذة وقت';
+						html += `
+						<div class="exam-row" id="examRow_${exam.id}">
+							<div class="exam-row-info">
+								<strong>${esc(exam.subject)}</strong>
+								<small>${exam.duration} دقيقة — ${exam.question_count || 0} أسئلة — <span class="${tagClass}">${tagText}</span></small>
+								<small>⏱ ${timeInfo}</small>
+							</div>
+							<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+								${published
+									? `<button class="btn ghost" onclick="unpublish(${exam.id})">إيقاف النشر</button>`
+									: `<button class="btn" onclick="publish(${exam.id})">نشر الامتحان</button>`
+								}
+								<button class="btn ghost" onclick="toggleTimeForm(${exam.id})">⏱ تعديل الوقت</button>
+							</div>
+							<div id="timeForm_${exam.id}" style="display:none;width:100%;margin-top:8px">
+								<div class="time-form">
+									<label>من: <input type="datetime-local" id="st_${exam.id}" value="${exam.start_time ? toLocalInput(exam.start_time) : ''}"></label>
+									<label>إلى: <input type="datetime-local" id="et_${exam.id}" value="${exam.end_time ? toLocalInput(exam.end_time) : ''}"></label>
+									<button class="btn" onclick="saveTimeWindow(${exam.id})">حفظ</button>
+									<button class="btn ghost" onclick="toggleTimeForm(${exam.id})">إلغاء</button>
+								</div>
+								<div id="twMsg_${exam.id}" class="notice" style="display:none;margin-top:6px"></div>
+							</div>
+						</div>`;
+					});
+					html += '</div>';
+				}
+				html += '</div>';
+			}
+			html += '</div>';
+		}
+		el.innerHTML = html;
+	}
+
+	async function publish(id) {
+		const res = await API.publishExam(id).catch(e => ({ success: false, message: e.message }));
+		alert(res.message);
+		if (res.success) loadExams();
+	}
+
+	async function unpublish(id) {
+		if (!confirm('هل تريد إيقاف نشر هذا الامتحان؟')) return;
+		const res = await API.unpublishExam(id).catch(e => ({ success: false, message: e.message }));
+		alert(res.message);
+		if (res.success) loadExams();
+	}
+
+	function toggleTimeForm(id) {
+		const f = document.getElementById('timeForm_' + id);
+		f.style.display = f.style.display === 'none' ? 'block' : 'none';
+	}
+
+	async function saveTimeWindow(id) {
+		const st  = document.getElementById('st_' + id).value;
+		const et  = document.getElementById('et_' + id).value;
+		const msg = document.getElementById('twMsg_' + id);
+		const res = await API.setExamTimeWindow(id, st || null, et || null)
+			.catch(e => ({ success: false, message: e.message }));
+		msg.textContent      = res.success ? '✓ تم الحفظ' : ('✗ ' + res.message);
+		msg.style.display    = 'block';
+		msg.style.background = res.success ? '#d4edda' : '#f8d7da';
+		msg.style.color      = res.success ? '#155724' : '#721c24';
+		if (res.success) setTimeout(loadExams, 1200);
+	}
+
+	// ── Live monitoring ────────────────────────────────────────────────────────
+	async function loadLiveSessions() {
+		const el  = document.getElementById('liveList');
+		const res = await API.getAllSessions().catch(e => ({ success: false, message: e.message }));
+		if (!res.success) { el.innerHTML = `<p style="color:#c00">${res.message}</p>`; return; }
+
+		const active = (res.data || []).filter(s => s.started_at && !s.submitted_at);
+		document.getElementById('activeCount').textContent = active.length;
+
+		if (!active.length) {
+			el.innerHTML = '<p style="color:#999;text-align:center;padding:20px">لا يوجد طلاب يؤدون الامتحان الآن.</p>';
+			return;
+		}
+
+		el.innerHTML = `<div class="session-live">` + active.map(s => `
+			<div class="session-live-card" onclick="openLiveView(${s.id}, '${esc(s.student_name || '—')}')">
+				<strong>${esc(s.student_name || '—')}</strong><br>
+				<span style="font-size:12px">${esc(s.subject || '—')} — ${esc(s.college || '')}</span><br>
+				<span style="font-size:11px;color:#155724">بدأ: ${new Date(s.started_at).toLocaleTimeString('ar-IQ')}</span>
+				${parseInt(s.suspicious_count) > 0
+					? `<br><span style="color:#721c24;font-size:11px">&#9888;&#65039; أحداث مشبوهة: ${s.suspicious_count}</span>`
+					: ''}
+				<br><span style="font-size:11px;color:#155724;text-decoration:underline">&#128247; عرض مباشر</span>
+			</div>`).join('') + `</div>`;
+	}
+
+	// ── Live-view modal (WebRTC) ───────────────────────────────────────────────
+	async function openLiveView(sessionId, studentName) {
+		liveSessionId = sessionId;
+		document.getElementById('liveModalTitle').textContent = 'مراقبة مباشرة: ' + studentName;
+		document.getElementById('liveModalStatus').textContent = 'جارٍ الاتصال...';
+		const vid = document.getElementById('liveModalVideo');
+		vid.srcObject = null;
+		document.getElementById('liveModal').classList.add('open');
+
+		closeSupervisorPc();
+
+		let offerData = null;
+		for (let i = 0; i < 8; i++) {
+			const res = await API.getSignal(sessionId, 'offer').catch(() => null);
+			if (res && res.success && res.data) { offerData = res.data; break; }
+			await new Promise(r => setTimeout(r, 1000));
+		}
+		if (!offerData) {
+			document.getElementById('liveModalStatus').textContent = 'الطالب لم يبدأ الكاميرا بعد — أعد المحاولة.';
+			return;
+		}
+
+		supervisorPc = new RTCPeerConnection(RTC_CONFIG);
+
+		supervisorPc.ontrack = (event) => {
+			if (vid.srcObject !== event.streams[0]) {
+				vid.srcObject = event.streams[0];
+				document.getElementById('liveModalStatus').textContent = 'متصل — بث مباشر';
+			}
+		};
+
+		supervisorPc.onicecandidate = ({ candidate }) => {
+			if (candidate) API.postSignal(sessionId, 'ice_supervisor', { candidate }).catch(() => {});
+		};
+
+		supervisorPc.onconnectionstatechange = () => {
+			const state = supervisorPc ? supervisorPc.connectionState : '';
+			if (state === 'failed')
+				document.getElementById('liveModalStatus').textContent = 'انقطع الاتصال — أغلق وأعد الفتح.';
+		};
+
+		await supervisorPc.setRemoteDescription(new RTCSessionDescription(offerData)).catch(() => {});
+		const answer = await supervisorPc.createAnswer();
+		await supervisorPc.setLocalDescription(answer);
+		await API.postSignal(sessionId, 'answer', { sdp: supervisorPc.localDescription }).catch(() => {});
+
+		studentIceSince = 0;
+		iceStudentTimer = setInterval(async () => {
+			if (!supervisorPc) { clearInterval(iceStudentTimer); return; }
+			const ir = await API.getSignal(sessionId, 'ice_student', studentIceSince).catch(() => null);
+			if (ir && ir.success && ir.data && ir.data.length) {
+				for (const c of ir.data)
+					await supervisorPc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+				studentIceSince += ir.data.length;
+			}
+		}, 500);
+	}
+
+	function closeSupervisorPc() {
+		clearInterval(iceStudentTimer);
+		iceStudentTimer = null;
+		if (supervisorPc) { supervisorPc.close(); supervisorPc = null; }
+		studentIceSince = 0;
+	}
+
+	function closeLiveView() {
+		document.getElementById('liveModal').classList.remove('open');
+		closeSupervisorPc();
+		document.getElementById('liveModalVideo').srcObject = null;
+		liveSessionId = null;
+	}
+
+	document.getElementById('liveModal').addEventListener('click', function(e) {
+		if (e.target === this) closeLiveView();
+	});
+
+	// ── Shared helpers ─────────────────────────────────────────────────────────
+	function esc(s) {
+		return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+	}
+	function fmtDate(dt) { return dt ? new Date(dt).toLocaleString('ar-IQ') : '—'; }
+	function toLocalInput(dt) {
+		if (!dt) return '';
+		const d = new Date(dt);
+		const pad = n => String(n).padStart(2,'0');
+		return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+	}
+
+	// ── Grading panel ──────────────────────────────────────────────────────────
+	let currentSessionId = null;
+	let currentSessionTotal = 0;
+
+	async function loadSessions() {
+		const el  = document.getElementById('sessionsList');
+		el.innerHTML = '<p style="color:#aaa">جارٍ التحميل...</p>';
+		const res = await API.getAllSessions().catch(e => ({ success: false, message: e.message }));
+		if (!res.success) { el.innerHTML = `<p style="color:#c00">${res.message}</p>`; return; }
+
+		const sessions = res.data || [];
+		if (!sessions.length) {
+			el.innerHTML = '<p style="color:#999;text-align:center;padding:20px">لا توجد جلسات بعد.</p>';
+			return;
+		}
+
+		el.innerHTML = `
+		<table style="width:100%;border-collapse:collapse;font-size:13px">
+			<thead><tr style="background:var(--green-deep);color:#fff">
+				<th style="padding:8px 10px">الطالب</th>
+				<th style="padding:8px 10px">المادة</th>
+				<th style="padding:8px 10px">النتيجة</th>
+				<th style="padding:8px 10px">الحالة</th>
+				<th style="padding:8px 10px"></th>
+			</tr></thead>
+			<tbody>${sessions.map(s => {
+				const pct   = parseFloat(s.percentage);
+				const cheat = parseInt(s.cheating_fail);
+				const pub   = parseInt(s.results_published);
+				const sub   = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('ar-IQ') : 'لم يُسلَّم';
+				const status = cheat ? '❌ رسوب/غش' : (pub ? '✓ منشور' : '⏳ قيد المراجعة');
+				return `<tr style="border-bottom:1px solid #eee">
+					<td style="padding:8px 10px">${s.student_name || '—'}<br><small>${s.roll_number || ''}</small></td>
+					<td style="padding:8px 10px">${s.subject || '—'}</td>
+					<td style="padding:8px 10px">${s.submitted_at ? `${s.score}/${s.total_marks} (${pct}%)` : '—'}<br><small>${sub}</small></td>
+					<td style="padding:8px 10px">${status}</td>
+					<td style="padding:8px 10px">
+						${s.submitted_at ? `<button class="btn" onclick="openDetail(${s.id})">تصحيح / عرض</button>` : ''}
+					</td>
+				</tr>`;
+			}).join('')}</tbody>
+		</table>`;
+	}
+
+	async function openDetail(sessionId) {
+		currentSessionId = sessionId;
+		currentSessionTotal = 0;
+		const el = document.getElementById('answersList');
+		const msg = document.getElementById('gradeMsg');
+		el.innerHTML = '<p style="color:#aaa">جارٍ التحميل...</p>';
+		document.getElementById('sessionDetail').classList.remove('hidden');
+		document.getElementById('sessionDetail').scrollIntoView({ behavior: 'smooth' });
+
+		const res = await API.getSessionDetail(sessionId).catch(e => ({ success: false, message: e.message }));
+		if (!res.success) { el.innerHTML = `<p style="color:#c00">${res.message}</p>`; return; }
+
+		const s = res.data;
+		currentSessionTotal = parseFloat(s.total_marks) || 0;
+		document.getElementById('detailTitle').textContent =
+			`${s.student_name || '—'} — ${s.subject || '—'} (${s.score}/${s.total_marks})`;
+
+		const answers = s.answers || [];
+		if (!answers.length) { el.innerHTML = '<p>لا توجد إجابات.</p>'; return; }
+
+		el.innerHTML = answers.map((a, i) => {
+			const isShort = a.type === 'short';
+			const correct = a.correct_answer || '—';
+			const student = a.answer || '(لم يجب)';
+			const gradeSection = isShort ? `
+				<div style="margin-top:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+					<label><strong>الدرجة (من ${a.mark}):</strong>
+						<input type="number" id="mark_${a.id}" value="${a.marks_awarded}" min="0" max="${a.mark}" step="0.5"
+						       style="width:70px;padding:4px 6px;margin-right:6px">
+					</label>
+					<label>
+						<input type="checkbox" id="correct_${a.id}" ${a.is_correct ? 'checked' : ''}> صحيح
+					</label>
+					<button class="btn" style="padding:4px 12px;font-size:13px"
+					        onclick="saveGrade(${a.id},${a.mark})">حفظ</button>
+				</div>` : '';
+			const autoLabel = a.is_correct
+				? '<span style="color:#155724">✓ صحيح</span>'
+				: '<span style="color:#721c24">✗ خطأ</span>';
+			return `
+			<div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px 14px;margin-bottom:10px">
+				<p><strong>س${i+1}:</strong> ${a.text}</p>
+				<p style="font-size:13px;color:#666">
+					<strong>إجابة الطالب:</strong> ${student} &nbsp;|&nbsp;
+					<strong>الإجابة الصحيحة:</strong> ${correct} &nbsp;|&nbsp;
+					${isShort ? `<strong>الدرجة:</strong> ${a.marks_awarded}/${a.mark}` : `${autoLabel} — ${a.marks_awarded}/${a.mark}`}
+				</p>
+				${gradeSection}
+			</div>`;
+		}).join('');
+	}
+
+	async function saveGrade(answerId, maxMark) {
+		const marks     = parseFloat(document.getElementById('mark_' + answerId).value) || 0;
+		const isCorrect = document.getElementById('correct_' + answerId).checked;
+		const msg       = document.getElementById('gradeMsg');
+
+		const res = await API.gradeAnswer(answerId, marks, isCorrect)
+			.catch(e => ({ success: false, message: e.message }));
+		msg.textContent = res.success ? '✓ تم حفظ التقييم' : ('✗ ' + res.message);
+		msg.style.display   = 'block';
+		msg.style.background = res.success ? '#d4edda' : '#f8d7da';
+		msg.style.color      = res.success ? '#155724' : '#721c24';
+		if (res.success) {
+			setTimeout(() => { msg.style.display = 'none'; }, 2500);
+			if (res.data) {
+				const titleEl = document.getElementById('detailTitle');
+				titleEl.textContent = titleEl.textContent.replace(
+					/\([\d.]+\/[\d.]+\)/,
+					`(${res.data.score}/${currentSessionTotal})`
+				);
+			}
+		}
+	}
+
+	async function publishResults() {
+		if (!currentSessionId) return;
+		const msg = document.getElementById('gradeMsg');
+		const res = await API.publishResults(currentSessionId)
+			.catch(e => ({ success: false, message: e.message }));
+		msg.textContent  = res.success ? '✓ تم نشر النتيجة' : ('✗ ' + res.message);
+		msg.style.display   = 'block';
+		msg.style.background = res.success ? '#d4edda' : '#f8d7da';
+		msg.style.color      = res.success ? '#155724' : '#721c24';
+		if (res.success) loadSessions();
+	}
+
+	async function markCheatFail() {
+		if (!currentSessionId) return;
+		if (!confirm('هل تريد تسجيل رسوب بسبب الغش لهذا الطالب؟ لا يمكن التراجع.')) return;
+		const msg = document.getElementById('gradeMsg');
+		const res = await API.markCheatingFail(currentSessionId)
+			.catch(e => ({ success: false, message: e.message }));
+		msg.textContent  = res.success ? '✓ تم تسجيل الرسوب' : ('✗ ' + res.message);
+		msg.style.display   = 'block';
+		msg.style.background = res.success ? '#d4edda' : '#f8d7da';
+		msg.style.color      = res.success ? '#155724' : '#721c24';
+		if (res.success) { closeDetail(); loadSessions(); }
+	}
+
+	function closeDetail() {
+		document.getElementById('sessionDetail').classList.add('hidden');
+		currentSessionId = null;
+		currentSessionTotal = 0;
+		loadSessions();
+	}
 	</script>
 
 </body>

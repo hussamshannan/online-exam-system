@@ -12,64 +12,77 @@
 	<script src="backend/api.js?v=5"></script>
 	<style>
 	  .college-group  { margin-bottom: 28px; }
-	  .college-title  { font-size: 18px; font-weight: 700; color: #2d5016; border-bottom: 2px solid #2d5016; padding-bottom: 6px; margin-bottom: 12px; }
+	  .college-title  { font-size: 17px; font-weight: 700; color: var(--green-deep); border-bottom: 2px solid var(--green-bg); padding-bottom: 6px; margin-bottom: 12px; }
 	  .dept-group     { margin-right: 16px; margin-bottom: 16px; }
-	  .dept-title     { font-size: 15px; font-weight: 600; color: #444; margin-bottom: 8px; }
+	  .dept-title     { font-size: 14px; font-weight: 700; color: var(--text-light); margin-bottom: 8px; }
 	  .batch-group    { margin-right: 16px; margin-bottom: 10px; }
-	  .batch-title    { font-size: 13px; color: #666; font-weight: 600; margin-bottom: 6px; }
+	  .batch-title    { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
 	  .exam-row {
 	    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-	    padding: 10px 14px; background: #fff; border: 1px solid #e0e0e0;
-	    border-radius: 8px; margin-bottom: 8px;
+	    padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+	    border-radius: var(--radius-sm); margin-bottom: 8px;
+	    transition: var(--transition);
 	  }
+	  .exam-row:hover { box-shadow: var(--shadow-sm); border-color: var(--green-bg); }
 	  .exam-row-info  { flex: 1; min-width: 200px; }
-	  .exam-row-info strong { font-size: 14px; color: #333; }
-	  .exam-row-info small  { color: #888; display: block; font-size: 12px; margin-top: 2px; }
-	  .tag-published   { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
-	  .tag-unpublished { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+	  .exam-row-info strong { font-size: 14px; color: var(--text); }
+	  .exam-row-info small  { color: var(--text-muted); display: block; font-size: 12px; margin-top: 3px; }
+	  .tag-published   { background: var(--success-bg); color: var(--success-text); padding: 2px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; border: 1px solid var(--success-border); }
+	  .tag-unpublished { background: var(--danger-bg); color: var(--danger-text); padding: 2px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; border: 1px solid var(--danger-border); }
 	  .time-form      { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
-	  .time-form input { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-family: Cairo, sans-serif; }
-	  #activeCount    { font-size: 15px; color: #2d5016; font-weight: 700; }
-	  .session-live { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+	  .time-form input { padding: 6px 10px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: Cairo, sans-serif; font-size: 13px; }
+	  #activeCount    { font-size: 15px; color: var(--green); font-weight: 700; }
+	  .session-live { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
 	  .session-live-card {
-	    border: 1px solid #c3e6cb; background: #d4edda; border-radius: 8px;
-	    padding: 8px 12px; font-size: 13px; min-width: 180px;
-	    cursor: pointer; transition: box-shadow .15s;
+	    border: 1px solid var(--green-bg); background: var(--green-tint); border-radius: var(--radius);
+	    padding: 12px 16px; font-size: 13px; min-width: 190px;
+	    cursor: pointer; transition: var(--transition);
 	  }
-	  .session-live-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+	  .session-live-card:hover { box-shadow: var(--shadow-sm); border-color: var(--green); transform: translateY(-2px); }
 
 	  /* Live-view modal */
 	  #liveModal {
 	    display: none; position: fixed; inset: 0;
-	    background: rgba(0,0,0,.6); z-index: 1000;
+	    background: rgba(0,0,0,.55); z-index: 1000;
 	    align-items: center; justify-content: center;
+	    backdrop-filter: blur(3px);
 	  }
 	  #liveModal.open { display: flex; }
 	  #liveModalBox {
-	    background: #fff; border-radius: 12px; padding: 24px;
+	    background: var(--surface); border-radius: var(--radius-lg); padding: 28px;
 	    min-width: 340px; max-width: 480px; width: 94vw;
 	    text-align: center; position: relative;
+	    box-shadow: var(--shadow-lg); border: 1px solid var(--border);
 	  }
-	  #liveModalTitle { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #2d5016; }
+	  #liveModalTitle { font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--green-deep); }
 	  #liveModalVideo {
-	    width: 100%; border-radius: 8px; border: 2px solid #2d5016;
+	    width: 100%; border-radius: var(--radius-sm); border: 2px solid var(--green);
 	    background: #000; min-height: 200px; display: block;
 	  }
-	  #liveModalStatus { font-size: 12px; color: #888; margin-top: 6px; }
+	  #liveModalStatus { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 	  #liveModalClose {
-	    position: absolute; top: 10px; left: 14px;
-	    background: none; border: none; font-size: 22px; cursor: pointer; color: #666;
+	    position: absolute; top: 12px; left: 16px;
+	    background: var(--surface-alt); border: 1px solid var(--border);
+	    border-radius: 50%; width: 30px; height: 30px;
+	    display: flex; align-items: center; justify-content: center;
+	    font-size: 16px; cursor: pointer; color: var(--text-light);
+	    transition: var(--transition);
 	  }
+	  #liveModalClose:hover { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
 	</style>
 </head>
 <body>
-	<h1 class="h1">لوحة التحكم — المشرف</h1>
+	<div class="brand-header">
+	  <div class="brand-icon">🛡️</div>
+	  <h1 class="h1">لوحة التحكم — المشرف</h1>
+	  <p class="paragraph">نظام الامتحانات الإلكترونية</p>
+	</div>
 
-	<div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
-	  <button id="tabExams"   class="btn"       onclick="switchTab('exams')">الامتحانات</button>
-	  <button id="tabMonitor" class="btn ghost" onclick="switchTab('monitor')">المراقبة المباشرة</button>
-	  <button id="tabAdmin"   class="btn ghost" onclick="switchTab('admin')">الإدارة</button>
-	  <button class="btn ghost" onclick="logout()">تسجيل الخروج</button>
+	<div style="display:flex;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap;background:var(--surface);padding:10px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);max-width:560px;margin-left:auto;margin-right:auto">
+	  <button id="tabExams"   class="btn"       onclick="switchTab('exams')">📋 الامتحانات</button>
+	  <button id="tabMonitor" class="btn ghost" onclick="switchTab('monitor')">📡 المراقبة المباشرة</button>
+	  <button id="tabAdmin"   class="btn ghost" onclick="switchTab('admin')">⚙️ الإدارة</button>
+	  <button class="btn ghost" onclick="logout()">خروج</button>
 	</div>
 
 	<!-- Live-view modal -->
@@ -107,18 +120,21 @@
 	  <div class="admin-container">
 	    <div class="admin-grid">
 	      <div class="admin-card" onclick="window.location.href='manage-students.html'">
+	        <span class="icon">👨‍🎓</span>
 	        <h2>إضافة / حذف طالب</h2>
-	        <p>إدارة الطلاب المسجلين</p>
+	        <p>إدارة الطلاب المسجلين في النظام</p>
 	        <button class="btn">اذهب الآن</button>
 	      </div>
 
 	      <div class="admin-card" onclick="window.location.href='manage-exams.html'">
+	        <span class="icon">📋</span>
 	        <h2>إدارة الامتحانات</h2>
 	        <p>عرض وحذف وإعادة تشغيل الامتحانات</p>
 	        <button class="btn">اذهب الآن</button>
 	      </div>
 
 	      <div class="admin-card" onclick="window.location.href='mange-user.html'">
+	        <span class="icon">📊</span>
 	        <h2>سجلات الجلسات</h2>
 	        <p>متابعة نشاط وأداء الطلاب</p>
 	        <button class="btn">اذهب الآن</button>
