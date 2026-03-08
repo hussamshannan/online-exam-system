@@ -9,6 +9,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 	<script src="backend/api.js?v=5"></script>
 	<style>
 	  .college-group  { margin-bottom: 28px; }
@@ -259,8 +260,8 @@
 	              </div>
 	              <div id="timeForm_${exam.id}" style="display:none;width:100%;margin-top:8px">
 	                <div class="time-form">
-	                  <label>من: <input type="datetime-local" id="st_${exam.id}" value="${exam.start_time ? toLocalInput(exam.start_time) : ''}"></label>
-	                  <label>إلى: <input type="datetime-local" id="et_${exam.id}" value="${exam.end_time ? toLocalInput(exam.end_time) : ''}"></label>
+	                  <label>من: <input type="text" id="st_${exam.id}" data-date="${exam.start_time ? toLocalInput(exam.start_time) : ''}" placeholder="التاريخ والوقت" readonly></label>
+	                  <label>إلى: <input type="text" id="et_${exam.id}" data-date="${exam.end_time ? toLocalInput(exam.end_time) : ''}" placeholder="التاريخ والوقت" readonly></label>
 	                  <button class="btn" onclick="saveTimeWindow(${exam.id})">حفظ</button>
 	                  <button class="btn ghost" onclick="toggleTimeForm(${exam.id})">إلغاء</button>
 	                </div>
@@ -276,6 +277,18 @@
 	  }
 
 	  el.innerHTML = html;
+	  initTimePickers();
+	}
+
+	function initTimePickers() {
+	  document.querySelectorAll('[id^="st_"],[id^="et_"]').forEach(input => {
+	    if (input._flatpickr) input._flatpickr.destroy();
+	    flatpickr(input, {
+	      ...FP_TREE_CONFIG,
+	      defaultDate: input.dataset.date ? new Date(input.dataset.date) : null,
+	      onChange(dates) { input.value = dates[0] ? flatpickr.formatDate(dates[0], 'Y-m-d H:i') : ''; }
+	    });
+	  });
 	}
 
 	async function publish(id) {
@@ -437,5 +450,21 @@
 	  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 	}
 	</script>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+<script>
+  flatpickr.localize(flatpickr.l10ns.ar);
+
+  const FP_TREE_CONFIG = {
+    enableTime: true,
+    dateFormat: 'Y-m-d H:i',
+    altInput: true,
+    altFormat: 'j F Y  ·  H:i',
+    time_24hr: true,
+    disableMobile: true,
+  };
+</script>
+
 </body>
 </html>
