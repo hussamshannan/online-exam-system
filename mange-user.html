@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
   <title>مراقبة الطلاب</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
@@ -20,18 +22,27 @@
     </div>
 
     <div class="center" style="margin-top:30px;display:flex;gap:12px;justify-content:center">
-      <button class="btn delete" onclick="clearAll()">مسح جميع السجلات</button>
-      <a href="admin.html"><button class="btn back">العودة إلى لوحة التحكم</button></a>
+      <button id="clearAllBtn" class="btn delete" onclick="clearAll()" style="display:none">مسح جميع السجلات</button>
+      <button class="btn back" id="backBtn" onclick="window.location.href='admin.html'">العودة إلى لوحة التحكم</button>
     </div>
   </div>
 
   <script>
-    // Verify admin session on load
+    // Verify session on load, then render
     (async function(){
       const res = await API.me().catch(() => null);
-      if (!res || !res.success || res.data.role !== 'admin') {
+      if (!res || !res.success || !['admin','teacher'].includes(res.data.role)) {
         window.location.href = 'index.html';
+        return;
       }
+      const role = res.data.role;
+      if (role === 'admin') {
+        document.getElementById('clearAllBtn').style.display = '';
+        document.getElementById('backBtn').onclick = () => window.location.href = 'admin.html';
+      } else {
+        document.getElementById('backBtn').onclick = () => window.location.href = 'teacher.html';
+      }
+      render();
     })();
 
     async function render() {
@@ -99,8 +110,6 @@
       alert(res.message);
       if (res.success) render();
     }
-
-    render();
   </script>
 </body>
 </html>

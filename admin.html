@@ -3,63 +3,423 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
-	<title>لوحة المشرف</title>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<title>لوحة التحكم — المشرف</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
-	<script src="backend/api.js"></script>
+	<script src="backend/api.js?v=5"></script>
+	<style>
+	  .college-group  { margin-bottom: 28px; }
+	  .college-title  { font-size: 18px; font-weight: 700; color: #2d5016; border-bottom: 2px solid #2d5016; padding-bottom: 6px; margin-bottom: 12px; }
+	  .dept-group     { margin-right: 16px; margin-bottom: 16px; }
+	  .dept-title     { font-size: 15px; font-weight: 600; color: #444; margin-bottom: 8px; }
+	  .batch-group    { margin-right: 16px; margin-bottom: 10px; }
+	  .batch-title    { font-size: 13px; color: #666; font-weight: 600; margin-bottom: 6px; }
+	  .exam-row {
+	    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+	    padding: 10px 14px; background: #fff; border: 1px solid #e0e0e0;
+	    border-radius: 8px; margin-bottom: 8px;
+	  }
+	  .exam-row-info  { flex: 1; min-width: 200px; }
+	  .exam-row-info strong { font-size: 14px; color: #333; }
+	  .exam-row-info small  { color: #888; display: block; font-size: 12px; margin-top: 2px; }
+	  .tag-published   { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+	  .tag-unpublished { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+	  .time-form      { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+	  .time-form input { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-family: Cairo, sans-serif; }
+	  #activeCount    { font-size: 15px; color: #2d5016; font-weight: 700; }
+	  .session-live { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+	  .session-live-card {
+	    border: 1px solid #c3e6cb; background: #d4edda; border-radius: 8px;
+	    padding: 8px 12px; font-size: 13px; min-width: 180px;
+	    cursor: pointer; transition: box-shadow .15s;
+	  }
+	  .session-live-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+
+	  /* Live-view modal */
+	  #liveModal {
+	    display: none; position: fixed; inset: 0;
+	    background: rgba(0,0,0,.6); z-index: 1000;
+	    align-items: center; justify-content: center;
+	  }
+	  #liveModal.open { display: flex; }
+	  #liveModalBox {
+	    background: #fff; border-radius: 12px; padding: 24px;
+	    min-width: 340px; max-width: 480px; width: 94vw;
+	    text-align: center; position: relative;
+	  }
+	  #liveModalTitle { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #2d5016; }
+	  #liveModalVideo {
+	    width: 100%; border-radius: 8px; border: 2px solid #2d5016;
+	    background: #000; min-height: 200px; display: block;
+	  }
+	  #liveModalStatus { font-size: 12px; color: #888; margin-top: 6px; }
+	  #liveModalClose {
+	    position: absolute; top: 10px; left: 14px;
+	    background: none; border: none; font-size: 22px; cursor: pointer; color: #666;
+	  }
+	</style>
 </head>
 <body>
 	<h1 class="h1">لوحة التحكم — المشرف</h1>
-	<p class="paragraph">إدارة المستخدمين والامتحانات والإشراف على الطلاب</p>
-	
-	<div class="admin-container">
-		<!-- Admin Cards -->
-		<div class="admin-grid">
-			<div class="admin-card" onclick="window.location.href='manage-students.html'">
-				<h2>إضافة / حذف طالب</h2>
-				<p>إدارة الطلاب المسجلين</p>
-				<button class="btn">اذهب الآن</button>
-			</div>
 
-			<div class="admin-card" onclick="window.location.href='manage-exams.html'">
-				<h2>إدارة الامتحانات</h2>
-				<p>عرض وحذف وإعادة تشغيل الامتحانات</p>
-				<button class="btn">اذهب الآن</button>
-			</div>
+	<div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
+	  <button id="tabExams"   class="btn"       onclick="switchTab('exams')">الامتحانات</button>
+	  <button id="tabMonitor" class="btn ghost" onclick="switchTab('monitor')">المراقبة المباشرة</button>
+	  <button id="tabAdmin"   class="btn ghost" onclick="switchTab('admin')">الإدارة</button>
+	  <button class="btn ghost" onclick="logout()">تسجيل الخروج</button>
+	</div>
 
-			<div class="admin-card" onclick="window.location.href='mange-user.html'">
-				<h2>مراقبة الطلاب</h2>
-				<p>متابعة نشاط وأداء الطلاب</p>
-				<button class="btn">اذهب الآن</button>
-			</div>
+	<!-- Live-view modal -->
+	<div id="liveModal">
+	  <div id="liveModalBox">
+	    <button id="liveModalClose" onclick="closeLiveView()">&#10005;</button>
+	    <div id="liveModalTitle">—</div>
+	    <video id="liveModalVideo" autoplay playsinline muted></video>
+	    <div id="liveModalStatus">جارٍ الاتصال...</div>
+	  </div>
+	</div>
 
-			<div class="admin-card" onclick="logout()">
-				<h2>تسجيل الخروج</h2>
-				<p>الخروج من لوحة التحكم</p>
-				<button class="btn delete">تسجيل الخروج</button>
-			</div>
-		</div>
+	<!-- Tab: Exams -->
+	<div id="examsTab">
+	  <div class="box">
+	    <h2>قائمة الامتحانات — مجمّعة حسب الكلية والقسم والدفعة</h2>
+	    <div id="examTree"><p style="color:#aaa;text-align:center;padding:20px">جارٍ التحميل...</p></div>
+	  </div>
+	</div>
+
+	<!-- Tab: Live monitoring -->
+	<div id="monitorTab" class="hidden">
+	  <div class="box">
+	    <h2>الطلاب النشطون الآن — <span id="activeCount">0</span> طالب</h2>
+	    <p class="paragraph" style="font-size:13px">يتم التحديث تلقائياً كل 10 ثوانٍ</p>
+	    <div id="liveList"><p style="color:#aaa;text-align:center;padding:20px">جارٍ التحميل...</p></div>
+	  </div>
+	  <div class="center" style="margin-top:14px">
+	    <button class="btn" onclick="window.location.href='mange-user.html'">عرض سجلات الجلسات الكاملة</button>
+	  </div>
+	</div>
+
+	<!-- Tab: Admin management -->
+	<div id="adminTab" class="hidden">
+	  <div class="admin-container">
+	    <div class="admin-grid">
+	      <div class="admin-card" onclick="window.location.href='manage-students.html'">
+	        <h2>إضافة / حذف طالب</h2>
+	        <p>إدارة الطلاب المسجلين</p>
+	        <button class="btn">اذهب الآن</button>
+	      </div>
+
+	      <div class="admin-card" onclick="window.location.href='manage-exams.html'">
+	        <h2>إدارة الامتحانات</h2>
+	        <p>عرض وحذف وإعادة تشغيل الامتحانات</p>
+	        <button class="btn">اذهب الآن</button>
+	      </div>
+
+	      <div class="admin-card" onclick="window.location.href='mange-user.html'">
+	        <h2>سجلات الجلسات</h2>
+	        <p>متابعة نشاط وأداء الطلاب</p>
+	        <button class="btn">اذهب الآن</button>
+	      </div>
+	    </div>
+	  </div>
 	</div>
 
 	<script>
-		// Verify admin session on load
-		(async function(){
-			const res = await API.me().catch(() => null);
-			if (!res || !res.success || res.data.role !== 'admin') {
-				window.location.href = 'index.html';
-			}
-		})();
+	let monitorInterval = null;
+	let liveSessionId   = null;
 
-		async function logout() {
-			if (confirm('هل تريد تسجيل الخروج؟')) {
-				await API.logout().catch(() => {});
-				localStorage.removeItem('adminLoggedIn');
-				localStorage.removeItem('authToken');
-				localStorage.removeItem('currentUser');
-				window.location.href = 'index.html';
-			}
-		}
+	// WebRTC (admin/supervisor side)
+	let supervisorPc    = null;
+	let studentIceSince = 0;
+	let iceStudentTimer = null;
+	const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+	// ── Session guard ──────────────────────────────────────────────────────────
+	(async function(){
+	  const res = await API.me().catch(() => null);
+	  if (!res || !res.success || res.data.role !== 'admin') {
+	    window.location.href = 'index.html';
+	    return;
+	  }
+	  loadExams();
+	})();
+
+	// ── Tab switching ──────────────────────────────────────────────────────────
+	function switchTab(tab) {
+	  const examsTab   = document.getElementById('examsTab');
+	  const monitorTab = document.getElementById('monitorTab');
+	  const adminTab   = document.getElementById('adminTab');
+	  const tabExams   = document.getElementById('tabExams');
+	  const tabMonitor = document.getElementById('tabMonitor');
+	  const tabAdmin   = document.getElementById('tabAdmin');
+
+	  examsTab.classList.add('hidden');
+	  monitorTab.classList.add('hidden');
+	  adminTab.classList.add('hidden');
+	  tabExams.classList.add('ghost');
+	  tabMonitor.classList.add('ghost');
+	  tabAdmin.classList.add('ghost');
+	  clearInterval(monitorInterval);
+
+	  if (tab === 'exams') {
+	    examsTab.classList.remove('hidden');
+	    tabExams.classList.remove('ghost');
+	  } else if (tab === 'monitor') {
+	    monitorTab.classList.remove('hidden');
+	    tabMonitor.classList.remove('ghost');
+	    loadLiveSessions();
+	    monitorInterval = setInterval(loadLiveSessions, 10000);
+	  } else {
+	    adminTab.classList.remove('hidden');
+	    tabAdmin.classList.remove('ghost');
+	  }
+	}
+
+	async function logout() {
+	  if (confirm('هل تريد تسجيل الخروج؟')) {
+	    await API.logout().catch(() => {});
+	    localStorage.removeItem('adminLoggedIn');
+	    localStorage.removeItem('authToken');
+	    localStorage.removeItem('currentUser');
+	    window.location.href = 'index.html';
+	  }
+	}
+
+	// ── Exams tree ─────────────────────────────────────────────────────────────
+	async function loadExams() {
+	  const el  = document.getElementById('examTree');
+	  const res = await API.getExams().catch(e => ({ success: false, message: e.message }));
+	  if (!res.success) { el.innerHTML = `<p style="color:#c00">${res.message}</p>`; return; }
+
+	  const exams = res.data || [];
+	  if (!exams.length) {
+	    el.innerHTML = '<p style="color:#999;text-align:center;padding:20px">لا توجد امتحانات.</p>';
+	    return;
+	  }
+
+	  // Group by college → department → batch
+	  const tree = {};
+	  exams.forEach(e => {
+	    const col  = e.college     || 'غير محدد';
+	    const dept = e.department  || 'غير محدد';
+	    const bat  = e.batch       || 'غير محدد';
+	    if (!tree[col])            tree[col] = {};
+	    if (!tree[col][dept])      tree[col][dept] = {};
+	    if (!tree[col][dept][bat]) tree[col][dept][bat] = [];
+	    tree[col][dept][bat].push(e);
+	  });
+
+	  let html = '';
+	  for (const [col, depts] of Object.entries(tree)) {
+	    html += `<div class="college-group"><div class="college-title">🏛️ ${esc(col)}</div>`;
+	    for (const [dept, batches] of Object.entries(depts)) {
+	      html += `<div class="dept-group"><div class="dept-title">📂 ${esc(dept)}</div>`;
+	      for (const [bat, exList] of Object.entries(batches)) {
+	        html += `<div class="batch-group"><div class="batch-title">👥 ${esc(bat)}</div>`;
+	        exList.forEach(exam => {
+	          const published = parseInt(exam.is_published);
+	          const tagClass  = published ? 'tag-published' : 'tag-unpublished';
+	          const tagText   = published ? 'منشور ✓' : 'غير منشور';
+	          const timeInfo  = exam.start_time
+	            ? `${fmtDate(exam.start_time)} ← → ${exam.end_time ? fmtDate(exam.end_time) : 'مفتوح'}`
+	            : 'لا يوجد نافذة وقت';
+
+	          html += `
+	            <div class="exam-row" id="examRow_${exam.id}">
+	              <div class="exam-row-info">
+	                <strong>${esc(exam.subject)}</strong>
+	                <small>${exam.duration} دقيقة — ${exam.question_count || 0} أسئلة — <span class="${tagClass}">${tagText}</span></small>
+	                <small>⏱ ${timeInfo}</small>
+	              </div>
+	              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+	                ${published
+	                  ? `<button class="btn ghost" onclick="unpublish(${exam.id})">إيقاف النشر</button>`
+	                  : `<button class="btn" onclick="publish(${exam.id})">نشر الامتحان</button>`
+	                }
+	                <button class="btn ghost" onclick="toggleTimeForm(${exam.id})">⏱ تعديل الوقت</button>
+	              </div>
+	              <div id="timeForm_${exam.id}" style="display:none;width:100%;margin-top:8px">
+	                <div class="time-form">
+	                  <label>من: <input type="datetime-local" id="st_${exam.id}" value="${exam.start_time ? toLocalInput(exam.start_time) : ''}"></label>
+	                  <label>إلى: <input type="datetime-local" id="et_${exam.id}" value="${exam.end_time ? toLocalInput(exam.end_time) : ''}"></label>
+	                  <button class="btn" onclick="saveTimeWindow(${exam.id})">حفظ</button>
+	                  <button class="btn ghost" onclick="toggleTimeForm(${exam.id})">إلغاء</button>
+	                </div>
+	                <div id="twMsg_${exam.id}" class="notice" style="display:none;margin-top:6px"></div>
+	              </div>
+	            </div>`;
+	        });
+	        html += '</div>';
+	      }
+	      html += '</div>';
+	    }
+	    html += '</div>';
+	  }
+
+	  el.innerHTML = html;
+	}
+
+	async function publish(id) {
+	  const res = await API.publishExam(id).catch(e => ({ success: false, message: e.message }));
+	  alert(res.message);
+	  if (res.success) loadExams();
+	}
+
+	async function unpublish(id) {
+	  if (!confirm('هل تريد إيقاف نشر هذا الامتحان؟')) return;
+	  const res = await API.unpublishExam(id).catch(e => ({ success: false, message: e.message }));
+	  alert(res.message);
+	  if (res.success) loadExams();
+	}
+
+	function toggleTimeForm(id) {
+	  const f = document.getElementById('timeForm_' + id);
+	  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+	}
+
+	async function saveTimeWindow(id) {
+	  const st  = document.getElementById('st_' + id).value;
+	  const et  = document.getElementById('et_' + id).value;
+	  const msg = document.getElementById('twMsg_' + id);
+
+	  const res = await API.setExamTimeWindow(id, st || null, et || null)
+	    .catch(e => ({ success: false, message: e.message }));
+
+	  msg.textContent      = res.success ? '✓ تم الحفظ' : ('✗ ' + res.message);
+	  msg.style.display    = 'block';
+	  msg.style.background = res.success ? '#d4edda' : '#f8d7da';
+	  msg.style.color      = res.success ? '#155724' : '#721c24';
+	  if (res.success) setTimeout(loadExams, 1200);
+	}
+
+	// ── Live monitoring ────────────────────────────────────────────────────────
+	async function loadLiveSessions() {
+	  const el  = document.getElementById('liveList');
+	  const res = await API.getAllSessions().catch(e => ({ success: false, message: e.message }));
+	  if (!res.success) { el.innerHTML = `<p style="color:#c00">${res.message}</p>`; return; }
+
+	  const all    = res.data || [];
+	  const active = all.filter(s => s.started_at && !s.submitted_at);
+
+	  document.getElementById('activeCount').textContent = active.length;
+
+	  if (!active.length) {
+	    el.innerHTML = '<p style="color:#999;text-align:center;padding:20px">لا يوجد طلاب يؤدون الامتحان الآن.</p>';
+	    return;
+	  }
+
+	  el.innerHTML = `<div class="session-live">` + active.map(s => `
+	    <div class="session-live-card" onclick="openLiveView(${s.id}, '${esc(s.student_name || '—')}')">
+	      <strong>${esc(s.student_name || '—')}</strong><br>
+	      <span style="font-size:12px">${esc(s.subject || '—')} — ${esc(s.college || '')}</span><br>
+	      <span style="font-size:11px;color:#155724">بدأ: ${new Date(s.started_at).toLocaleTimeString('ar-IQ')}</span>
+	      ${parseInt(s.suspicious_count) > 0
+	        ? `<br><span style="color:#721c24;font-size:11px">&#9888;&#65039; أحداث مشبوهة: ${s.suspicious_count}</span>`
+	        : ''}
+	      <br><span style="font-size:11px;color:#155724;text-decoration:underline">&#128247; عرض مباشر</span>
+	    </div>`).join('') + `</div>`;
+	}
+
+	// ── Live-view modal (WebRTC) ───────────────────────────────────────────────
+	async function openLiveView(sessionId, studentName) {
+	  liveSessionId = sessionId;
+	  document.getElementById('liveModalTitle').textContent = 'مراقبة مباشرة: ' + studentName;
+	  document.getElementById('liveModalStatus').textContent = 'جارٍ الاتصال...';
+	  const vid = document.getElementById('liveModalVideo');
+	  vid.srcObject = null;
+	  document.getElementById('liveModal').classList.add('open');
+
+	  closeSupervisorPc();
+
+	  // Wait up to 8s for the student's offer to appear
+	  let offerData = null;
+	  for (let i = 0; i < 8; i++) {
+	    const res = await API.getSignal(sessionId, 'offer').catch(() => null);
+	    if (res && res.success && res.data) { offerData = res.data; break; }
+	    await new Promise(r => setTimeout(r, 1000));
+	  }
+	  if (!offerData) {
+	    document.getElementById('liveModalStatus').textContent = 'الطالب لم يبدأ الكاميرا بعد — أعد المحاولة.';
+	    return;
+	  }
+
+	  supervisorPc = new RTCPeerConnection(RTC_CONFIG);
+
+	  supervisorPc.ontrack = (event) => {
+	    if (vid.srcObject !== event.streams[0]) {
+	      vid.srcObject = event.streams[0];
+	      document.getElementById('liveModalStatus').textContent = 'متصل — بث مباشر';
+	    }
+	  };
+
+	  supervisorPc.onicecandidate = ({ candidate }) => {
+	    if (candidate) {
+	      API.postSignal(sessionId, 'ice_supervisor', { candidate }).catch(() => {});
+	    }
+	  };
+
+	  supervisorPc.onconnectionstatechange = () => {
+	    const state = supervisorPc ? supervisorPc.connectionState : '';
+	    if (state === 'failed') {
+	      document.getElementById('liveModalStatus').textContent = 'انقطع الاتصال — أغلق وأعد الفتح.';
+	    }
+	  };
+
+	  await supervisorPc.setRemoteDescription(new RTCSessionDescription(offerData)).catch(() => {});
+	  const answer = await supervisorPc.createAnswer();
+	  await supervisorPc.setLocalDescription(answer);
+	  await API.postSignal(sessionId, 'answer', { sdp: supervisorPc.localDescription }).catch(() => {});
+
+	  // Poll for student ICE candidates
+	  studentIceSince = 0;
+	  iceStudentTimer = setInterval(async () => {
+	    if (!supervisorPc) { clearInterval(iceStudentTimer); return; }
+	    const ir = await API.getSignal(sessionId, 'ice_student', studentIceSince).catch(() => null);
+	    if (ir && ir.success && ir.data && ir.data.length) {
+	      for (const c of ir.data) {
+	        await supervisorPc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+	      }
+	      studentIceSince += ir.data.length;
+	    }
+	  }, 500);
+	}
+
+	function closeSupervisorPc() {
+	  clearInterval(iceStudentTimer);
+	  iceStudentTimer = null;
+	  if (supervisorPc) { supervisorPc.close(); supervisorPc = null; }
+	  studentIceSince = 0;
+	}
+
+	function closeLiveView() {
+	  document.getElementById('liveModal').classList.remove('open');
+	  closeSupervisorPc();
+	  const vid = document.getElementById('liveModalVideo');
+	  vid.srcObject = null;
+	  liveSessionId = null;
+	}
+
+	// Close modal on backdrop click
+	document.getElementById('liveModal').addEventListener('click', function(e) {
+	  if (e.target === this) closeLiveView();
+	});
+
+	// ── Helpers ────────────────────────────────────────────────────────────────
+	function esc(s) {
+	  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+	}
+	function fmtDate(dt) {
+	  return dt ? new Date(dt).toLocaleString('ar-IQ') : '—';
+	}
+	function toLocalInput(dt) {
+	  if (!dt) return '';
+	  const d = new Date(dt);
+	  const pad = n => String(n).padStart(2,'0');
+	  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+	}
 	</script>
 </body>
 </html>

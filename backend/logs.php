@@ -7,7 +7,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 // ─── GET  →  all sessions with scores + suspicious-event counts ──────────────
 if ($method === 'GET') {
-    authUser($db, 'admin');
+    $user = authUser($db);
+    if (!in_array($user['role'], ['admin', 'teacher'])) fail('صلاحيات غير كافية', 403);
 
     $rows = $db->query('
         SELECT
@@ -39,9 +40,10 @@ if ($method === 'GET') {
     ok($rows);
 }
 
-// ─── POST  →  delete a single session (admin) ────────────────────────────────
+// ─── POST  →  delete a single session (admin/supervisor) ────────────────────
 if ($method === 'POST') {
-    authUser($db, 'admin');
+    $user = authUser($db);
+    if (!in_array($user['role'], ['admin'])) fail('صلاحيات غير كافية', 403);
     $b  = body();
     $id = (int)($b['id'] ?? 0);
     if (!$id) fail('معرّف الجلسة مطلوب');

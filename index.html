@@ -23,7 +23,7 @@
     <div class="dropdown-container">
         <select id="userType" class="dropdown-select dropdown-select-visible">
             <option value="طالب">طالب</option>
-            <option value="مشرف">مشرف</option>
+            <option value="مشرف">مشرف (أدمن)</option>
             <option value="معلم">معلم</option>
         </select>
         <br>
@@ -77,9 +77,9 @@
                 localStorage.setItem('currentUser',  JSON.stringify(res.data.user));
 
                 const role = res.data.user.role;
-                if (role === 'admin')   { localStorage.setItem('adminLoggedIn', 'true'); window.location.href = 'admin.html'; }
-                else if (role === 'teacher') window.location.href = 'teacher.html';
-                else                         window.location.href = 'student2.html';
+                if (role === 'admin')           { localStorage.setItem('adminLoggedIn', 'true'); window.location.href = 'admin.html'; }
+                else if (role === 'teacher')    window.location.href = 'teacher.html';
+                else                            window.location.href = 'student2.html';
 
             } catch (e) {
                 alert(e.message);
